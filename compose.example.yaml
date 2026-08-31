@@ -1,0 +1,38 @@
+services:
+  jane-clanker:
+    # Option A: Pull pre-built image from GHCR (fastest)
+    image: ghcr.io/anro-bot-developers/jane-clanker-public:latest
+    
+    # Option B: Build locally from source if preferred
+    # build: .
+    
+    container_name: jane-clanker
+    restart: unless-stopped
+    
+    # Run with proper UID:GID matching your host user (optional but good practice)
+    # user: "1000:1000"
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN:-your_discord_token_here}
+      - JANE_DB_PATH=/app/data/bot.db
+      - JANE_CONSOLE_COLOR=auto
+      - JANE_ENABLE_PRIVATE_EXTENSIONS=0
+      - ENABLE_DESTRUCTIVE_COMMANDS=0
+      - DESTRUCTIVE_COMMANDS_DRY_RUN=1
+      - JANE_DISABLE_GIT_PULL_ON_RESTART=1
+      - JANE_ENABLE_AUTO_GIT_UPDATE=0
+
+    volumes:
+      # Persistent SQLite database & local logs
+      # Note: The ':z' flag is recommended for SELinux systems (RHEL, Rocky, Fedora)
+      - ./data:/app/data:z
+      # Optional: mount localOnly folder if you use Google OAuth / Service accounts
+      # - ./localOnly:/app/localOnly:z
+
+    # Optional: Resource constraints for low-spec VPS/homelabs
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
