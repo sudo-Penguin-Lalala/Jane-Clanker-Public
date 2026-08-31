@@ -180,14 +180,14 @@ _humanMessageRouter: runtimeMessageRouting.HumanMessageRouter | None = None
 _maintenanceCoordinator = runtimeMaintenance.MaintenanceCoordinator(
     botClient=botClient,
     configModule=config,
-    recruitmentService=recruitmentService,
-    recruitmentSheets=recruitmentSheets,
+    recruitmentService=None,
+    recruitmentSheets=None,
     departmentOrbatSheets=departmentOrbatSheets,
     orbatSheets=orbatSheets,
     serverSafetyService=_privateServices.serverSafetyService,
     orbatAuditRuntime=_privateServices.orbatAuditRuntime,
-    sessionService=sessionService,
-    sessionViews=sessionViews,
+    sessionService=None,
+    sessionViews=None,
     taskBudgeter=taskBudgeter,
     configSanityModule=runtimeConfigSanity,
 )
@@ -197,10 +197,10 @@ _bootstrapCoordinator = runtimeBootstrap.BootstrapCoordinator(
     configModule=config,
     initDbFn=initDb,
     loadMultiRegistryFn=_privateServices.loadMultiOrbatRegistry,
-    sessionViews=sessionViews,
+    sessionViews=None,
     maintenanceCoordinator=_maintenanceCoordinator,
     taskBudgeter=taskBudgeter,
-    recruitmentService=recruitmentService,
+    recruitmentService=None,
     helpCommandsModule=runtimeHelpCommands,
     pluginRegistry=_pluginRegistry,
     extensionNames=runtimeExtensionLayout.buildExtensionNames(configModule=config),
@@ -495,6 +495,9 @@ async def _postCopyServerWebhookMessage(
     )
 
 
+async def _noopHandler(*args, **kwargs):
+    return False
+
 def _hasCohostPermission(member: discord.Member) -> bool:
     return runtimePermissions.hasCohostPermission(member)
 
@@ -590,8 +593,8 @@ def _getTextCommandRouter() -> runtimeTextCommands.TextCommandRouter:
         _textCommandRouter = runtimeTextCommands.TextCommandRouter(
             botClient=botClient,
             configModule=config,
-            sessionService=sessionService,
-            sessionViews=sessionViews,
+            sessionService=None,
+            sessionViews=None,
             taskBudgeter=taskBudgeter,
             helpCommandsModule=runtimeHelpCommands,
             permissionsModule=runtimePermissions,
@@ -607,7 +610,7 @@ def _getTextCommandRouter() -> runtimeTextCommands.TextCommandRouter:
             isGuildAllowedForCommands=_isGuildAllowedForCommands,
             allowGuildForCommands=_allowGuildForCommands,
             orbatWeeklyScheduleConfig=_orbatWeeklyScheduleConfig,
-            trainingLogCoordinator=_trainingLogCoordinator,
+            trainingLogCoordinator=None,
             serverSafetyService=_privateServices.serverSafetyService,
             gitUpdateCoordinator=_gitUpdateCoordinator,
             generalErrorLogPath=str(getattr(botClient, "runtimeServices", {}).get("generalErrorLogPath", "") or ""),
@@ -625,7 +628,7 @@ def _getHumanMessageRouter() -> runtimeMessageRouting.HumanMessageRouter:
             orgFeatureGateModule=runtimeOrgFeatureGate,
             sillyCommandsModule=sillyCommands,
             textCommandRouterProvider=_getTextCommandRouter,
-            trainingStatsHandler=_trainingLogCoordinator.handleTrainingStats,
+            trainingStatsHandler=_noopHandler,
             hasCohostPermission=_hasCohostPermission,
             isCommandExecutionAllowed=_isCommandExecutionAllowed,
             isGuildAllowedForCommands=_isGuildAllowedForCommands,
@@ -982,33 +985,6 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
     if int(getattr(before, "id", 0) or 0) != int(getattr(after, "id", 0) or 0):
         return
     _trainingLogRuntime.scheduleCapture(after)
-
-@botClient.listen("on_interaction")
-async def handleRobloxRetry(interaction: discord.Interaction) -> None:
-    if interaction.response.is_done():
-        return
-    try:
-        handled = await sessionViews.handleRobloxRetryInteraction(interaction)
-    except Exception:
-        logging.exception("Roblox retry handler failed.")
-        return
-    if handled:
-        return
-    try:
-        handled = await sessionViews.handleInventoryRetryInteraction(interaction)
-    except Exception:
-        logging.exception("Inventory retry handler failed.")
-        return
-    if handled:
-        return
-    try:
-        handled = await sessionViews.handleSessionControlFallbackInteraction(interaction)
-    except Exception:
-        logging.exception("Session control fallback handler failed.")
-        return
-    if handled:
-        return
-
 
 if __name__ == "__main__":
     runtimeEntrypoint.runMain(
