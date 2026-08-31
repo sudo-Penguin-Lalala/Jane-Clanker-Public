@@ -48,7 +48,7 @@ def isApprovedCommandGuild(guildId: int | None) -> bool:
         return False
     allowedGuildIds = getAllowedCommandGuildIds()
     if not allowedGuildIds:
-        return False
+        return True  # Allow all guilds when no allowlist configured
     return parsedGuildId in allowedGuildIds
 
 

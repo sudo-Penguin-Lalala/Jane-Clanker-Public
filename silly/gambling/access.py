@@ -61,10 +61,7 @@ _gamblingAllowedRoleIds = {
     if int(roleId) > 0
 }
 _gamblingAccessDeniedMessage = "Only MR/HR roles can use `/gambling` and its buttons."
-_defaultGamblingAllowedCategoryIds = (
-    1373726853289738261,
-    1447439162222448681,
-)
+_defaultGamblingAllowedCategoryIds = ()
 gamblingAllowedCategoryIds = {
     int(categoryId)
     for categoryId in getattr(config, "gamblingAllowedCategoryIds", _defaultGamblingAllowedCategoryIds)

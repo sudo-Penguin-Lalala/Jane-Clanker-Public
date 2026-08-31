@@ -16,7 +16,7 @@ from runtime import interaction as interactionRuntime
 
 log = logging.getLogger(__name__)
 
-_defaultJailedRoleId = 1477066703564177510
+_defaultJailedRoleId = 0
 
 
 def _manageableRoleForBot(botMember: discord.Member, role: discord.Role) -> bool:
@@ -365,4 +365,4 @@ class JailCog(runtimeCogGuards.InteractionGuardMixin, commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(JailCog(bot), guilds=runtimeCommandScopes.getTestGuildObjects())
+    await bot.add_cog(JailCog(bot))

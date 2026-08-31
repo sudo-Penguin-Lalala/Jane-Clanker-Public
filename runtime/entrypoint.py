@@ -8,21 +8,8 @@ import signal
 from pathlib import Path
 from typing import Any, Callable
 
-from hypercorn.asyncio import serve
-from hypercorn.config import Config
-
-
 import discord
 from dotenv import find_dotenv, load_dotenv
-
-from quart import Quart, jsonify
-
-from API import EndPoints as orientationApi
-
-app = Quart("JaneAPI")
-orientationApi.registerRoutes(app)
-
-shutdown_api_event = asyncio.Event()
 
 from runtime import (
     errorLogging as runtimeErrorLogging,
@@ -32,9 +19,8 @@ from runtime import (
 log = logging.getLogger(__name__)
 
 
-@app.get("/health")
-async def apiHealth():
-    return jsonify({"ok": True, "service": "jane-orientation-api"})
+async def _noopHandler(message: Any = None) -> bool:
+    return False
 
 
 def hasUtf8Bom(filepath: str) -> bool:
@@ -94,18 +80,11 @@ def isRetryableDiscordStartupError(exc: BaseException) -> bool:
     return moduleName.startswith("aiohttp.")
 
 
-async def run_api(*, host: str, port: int) -> None:
-    serverConfig = Config()
-    serverConfig.bind = [f"{host}:{port}"]
-    await serve(app, serverConfig, shutdown_trigger=shutdown_api_event.wait)
-
-
 def installTerminationHandler(botClient: Any) -> Callable[[], None]:
     loop = asyncio.get_running_loop()
     shutdownTask: asyncio.Task | None = None
 
     async def _shutdown() -> None:
-        shutdown_api_event.set()
         if not botClient.is_closed():
             await botClient.close()
 
@@ -136,62 +115,9 @@ async def runRuntimeServices(
     *,
     configModule: Any,
 ) -> None:
-    apiEnabled = bool(getattr(configModule, "orientationApiEnabled", False))
-    apiToken = str(getattr(configModule, "orientationApiToken", "") or "").strip()
-    apiHost = str(getattr(configModule, "orientationApiHost", "127.0.0.1") or "127.0.0.1").strip()
-    try:
-        apiPort = int(getattr(configModule, "orientationApiPort", 24003) or 24003)
-    except (TypeError, ValueError):
-        apiPort = 24003
-    apiPort = max(1, min(65535, apiPort))
-
-    orientationApi.configureApi(botClient=botClient, token=apiToken)
-    if apiEnabled and not apiToken:
-        raise RuntimeError(
-            "Orientation API is enabled but JANE_ORIENTATION_API_TOKEN is not configured."
-        )
-    if apiEnabled:
-        log.info("Orientation API ready at http://%s:%s", apiHost, apiPort)
-
     removeTerminationHandler = installTerminationHandler(botClient)
     try:
-        botTask = asyncio.create_task(
-            runBotWithStartupRetry(botClient, token, configModule=configModule),
-            name="discord-bot",
-        )
-        if not apiEnabled:
-            await botTask
-            return
-
-        shutdown_api_event.clear()
-        apiTask = asyncio.create_task(
-            run_api(host=apiHost, port=apiPort),
-            name="orientation-api",
-        )
-        botClient.shutdown_api_event = shutdown_api_event
-        try:
-            done, _pending = await asyncio.wait(
-                {botTask, apiTask},
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-            if apiTask in done:
-                # A configured API unexpectedly stopping is a runtime failure, not
-                # a reason to leave Discord running in a partially healthy state.
-                await apiTask
-                if not botTask.done() and not shutdown_api_event.is_set():
-                    raise RuntimeError("Orientation API stopped unexpectedly.")
-            await botTask
-        finally:
-            shutdown_api_event.set()
-            if not apiTask.done():
-                try:
-                    await asyncio.wait_for(apiTask, timeout=10)
-                except TimeoutError:
-                    apiTask.cancel()
-            await asyncio.gather(apiTask, return_exceptions=True)
-            if not botTask.done():
-                botTask.cancel()
-                await asyncio.gather(botTask, return_exceptions=True)
+        await runBotWithStartupRetry(botClient, token, configModule=configModule)
     finally:
         removeTerminationHandler()
 

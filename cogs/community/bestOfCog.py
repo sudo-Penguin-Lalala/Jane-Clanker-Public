@@ -13,16 +13,11 @@ from discord.ext import commands
 
 import config
 from features.community.bestOf import service as bestOfService
-from features.staff.sessions.Roblox import robloxUsers
 from runtime import interaction as interactionRuntime
 from runtime import permissions as runtimePermissions
 from runtime import viewBases as runtimeViewBases
 from runtime.taskSupervisor import cancelTasks
 
-# Behold the sacred fallback recipient.
-# Keeper of last-resort Best Of scrolls.
-# Patron saint of "this made me giggle, leave it in."
-_bigFrenchManUserID = 743495349725036625
 log = logging.getLogger(__name__)
 _userIdRegex = re.compile(r"\d{15,22}")
 _candidatePageSize = 25
@@ -1106,7 +1101,7 @@ class BestOfCog(commands.Cog):
         summaryEmbeds, sectionPayloads = await self._resultsDmPayload(guild, pollId)
         creatorUserId = int(pollRow.get("createdBy") or 0)
         targetUserIds: list[int] = []
-        for rawUserId in (creatorUserId, _bigFrenchManUserID):
+        for rawUserId in (creatorUserId,):
             userId = int(rawUserId or 0)
             if userId > 0 and userId not in targetUserIds:
                 targetUserIds.append(userId)

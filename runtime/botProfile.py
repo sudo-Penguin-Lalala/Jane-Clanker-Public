@@ -101,10 +101,7 @@ def countRepoTextLines(repoRoot: Path) -> RepoLineCount:
 
 
 def buildJaneBio(count: RepoLineCount) -> str:
-    return (
-        f"Helping ANRO with `{int(count.lines):,}` lines of code across `{int(count.files):,}` files.\n\n"
-        "Developed by a_very_tired_potato and koulmoir for use in ANRO operations."
-    )
+    return f"Running `{int(count.lines):,}` lines of code across `{int(count.files):,}` files."
 
 
 def _allowedGuildIds(configModule: Any) -> set[int]:

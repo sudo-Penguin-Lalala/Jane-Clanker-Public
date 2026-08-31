@@ -47,16 +47,6 @@ from discord.ext import commands
 
 import config
 from db.sqlite import closeDb, initDb
-from features.staff.recruitment import (
-    service as recruitmentService,
-    sheets as recruitmentSheets,
-)
-from features.staff.trainingLog import trainingLogService
-from features.staff.sessions import (
-    service as sessionService,
-    views as sessionViews,
-)
-from features.staff.sessions.Roblox import robloxTransport, robloxUsers
 from runtime import (
     auditStream as runtimeAuditStream,
     backups as runtimeBackups,
@@ -70,16 +60,12 @@ from runtime import (
     errors as runtimeErrors,
     eventLoopWatchdog as runtimeEventLoopWatchdog,
     featureFlags as runtimeFeatureFlags,
-    gamblingApi as runtimeGamblingApi,
     helpCommands as runtimeHelpCommands,
     interaction as interactionRuntime,
-    janeIdentityWeb as runtimeJaneIdentityWeb,
-    johnEventRuntime as runtimeJohnEventRuntime,
     maintenance as runtimeMaintenance,
     messageRouting as runtimeMessageRouting,
     metricsExport as runtimeMetricsExport,
     orgFeatureGate as runtimeOrgFeatureGate,
-    orbatAudit as runtimeOrbatAudit,
     pauseState as runtimePauseState,
     permissions as runtimePermissions,
     privateServices as runtimePrivateServices,
@@ -92,7 +78,6 @@ from runtime import (
     taskStats as runtimeTaskStats,
     taskSupervisor as runtimeTaskSupervisor,
     textCommands as runtimeTextCommands,
-    trainingLogRuntime as runtimeTrainingLogRuntime,
     webhookHealth as runtimeWebhookHealth,
     webhooks as runtimeWebhooks,
 )
@@ -227,8 +212,6 @@ _errorCoordinator = runtimeErrors.ErrorCoordinator(
     retryQueue=_retryQueue,
 )
 _metricsExporter: runtimeMetricsExport.MetricsExporter | None = None
-_gamblingApiServer: runtimeGamblingApi.GamblingApiServer | None = None
-_janeIdentityWebServer: runtimeJaneIdentityWeb.JaneIdentityWebServer | None = None
 _botProfileBioStarted = False
 
 
@@ -253,36 +236,6 @@ _metricsExporter = runtimeMetricsExport.MetricsExporter(
     auditStream=_auditStream,
     botStartedAt=_botStartedAt,
     getProcessResourceSnapshot=_getProcessResourceSnapshot,
-)
-_gamblingApiServer = runtimeGamblingApi.GamblingApiServer(
-    configModule=config,
-    metricsProvider=_metricsExporter.snapshot,
-)
-_janeIdentityWebServer = runtimeJaneIdentityWeb.JaneIdentityWebServer(
-    configModule=config,
-    botClient=botClient,
-)
-_trainingLogCoordinator = trainingLogService.TrainingLogCoordinator(
-    botClient=botClient,
-    configModule=config,
-    taskBudgeter=taskBudgeter,
-    recruitmentService=recruitmentService,
-    webhookModule=runtimeWebhooks,
-)
-_trainingLogRuntime = runtimeTrainingLogRuntime.TrainingLogRuntime(
-    botClient=botClient,
-    configModule=config,
-    taskBudgeter=taskBudgeter,
-    coordinator=_trainingLogCoordinator,
-)
-_johnEventCoordinator = runtimeJohnEventRuntime.JohnEventCoordinator(
-    botClient=botClient,
-    configModule=config,
-    taskBudgeter=taskBudgeter,
-    orbatSheets=orbatSheets,
-    robloxUsersModule=robloxUsers,
-    orbatAuditRuntime=runtimeOrbatAudit,
-    privateExtensionsEnabled=_privateServices.privateExtensionsEnabled,
 )
 
 
@@ -477,15 +430,8 @@ async def _maybeSyncRoleBasedOrbats(member: discord.Member, guildId: int) -> Non
                 result.get("targetRank"),
             )
             try:
-                payload = runtimeOrbatAudit.buildRoleSyncChangeLog(
-                    memberMention=member.mention,
-                    result=result,
-                )
                 if payload:
-                    await runtimeOrbatAudit.sendOrbatChangeLog(
-                        botClient,
-                        **payload,
-                    )
+                    pass
             except Exception:
                 logging.exception(
                     "Failed to emit role-based ORBAT audit log for member %s.",

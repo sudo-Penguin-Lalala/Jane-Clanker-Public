@@ -1,2 +1,0 @@
-"""Department ORBAT helpers."""
-

@@ -1,1 +1,0 @@
-"""Background check flag rules."""

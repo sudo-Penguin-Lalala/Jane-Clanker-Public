@@ -72,7 +72,7 @@ def isFeatureEnabledForGuild(configModule: Any, guildId: int, featureKey: object
     if parsedGuildId <= 0:
         return True
     if not orgProfiles.isGuildAssignedToOrganization(configModule, parsedGuildId):
-        return False
+        return True  # Changed: allow all when no org configured
     orgKey = orgProfiles.getOrganizationKeyForGuild(configModule, parsedGuildId)
     enabledFeatures = _enabledFeaturesForOrg(configModule, orgKey)
     if not enabledFeatures:

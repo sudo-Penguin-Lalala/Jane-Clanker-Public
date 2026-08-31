@@ -62,6 +62,8 @@ _hallEmojiNameRoutes = {
     "wilted_flower": _wiltedRoseEmoji,
 }
 
+# Note: These custom emoji IDs are specific to the original server.
+# To use custom emojis for Hall of Fame/Shame, update these IDs for your server.
 _hallEmojiIdRoutes = {
     1381056801969275061: (
         "FAME",

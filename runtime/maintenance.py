@@ -18,16 +18,16 @@ class MaintenanceCoordinator:
         *,
         botClient: Any,
         configModule: Any,
-        recruitmentService: Any,
-        recruitmentSheets: Any,
-        departmentOrbatSheets: Any,
-        orbatSheets: Any,
-        serverSafetyService: Any | None,
-        orbatAuditRuntime: Any | None,
-        sessionService: Any,
-        sessionViews: Any,
-        taskBudgeter: Any,
-        configSanityModule: Any,
+        recruitmentService: Any = None,
+        recruitmentSheets: Any = None,
+        departmentOrbatSheets: Any = None,
+        orbatSheets: Any = None,
+        serverSafetyService: Any | None = None,
+        orbatAuditRuntime: Any | None = None,
+        sessionService: Any = None,
+        sessionViews: Any = None,
+        taskBudgeter: Any = None,
+        configSanityModule: Any = None,
     ) -> None:
         self.botClient = botClient
         self.config = configModule
@@ -450,59 +450,10 @@ class MaintenanceCoordinator:
         maxAttempts: int,
         retryBaseDelaySec: float,
     ) -> None:
-        if not bool(getattr(self.config, "orbatMirrorEnabled", True)):
-            return
-
-        from features.staff.orbat import mirror as orbatMirror
-
-        label = "ORBAT mirror refresh"
-        attempt = 1
-        while True:
-            startedAt = datetime.now(timezone.utc)
-            try:
-                result = await orbatMirror.refreshAllOrbatMirrors(taskBudgeter=self.taskBudgeter)
-                summary = self._summarizeMaintenanceResult(result)
-                elapsedSec = (datetime.now(timezone.utc) - startedAt).total_seconds()
-                if isinstance(result, dict) and result.get("ok") is False:
-                    log.warning("%s (%s): %s [%.2fs]", label, runType, summary, elapsedSec)
-                else:
-                    log.info("%s (%s): %s [%.2fs]", label, runType, summary, elapsedSec)
-                return
-            except Exception as exc:
-                elapsedSec = (datetime.now(timezone.utc) - startedAt).total_seconds()
-                isRetryable = self._isRetryableSheetsError(exc, includeTransport=True)
-                if isRetryable and attempt < maxAttempts:
-                    delaySec = retryBaseDelaySec * attempt
-                    log.warning(
-                        "%s (%s) retryable sheets failure on attempt %d/%d [%.2fs]; retrying in %.1fs (%s).",
-                        label,
-                        runType,
-                        attempt,
-                        maxAttempts,
-                        elapsedSec,
-                        delaySec,
-                        exc.__class__.__name__,
-                        extra={"skipErrorMirrorDm": True},
-                    )
-                    attempt += 1
-                    await asyncio.sleep(delaySec)
-                    continue
-                if isRetryable:
-                    log.warning(
-                        "%s (%s) failed after %d retry attempts due to retryable sheets error (%s: %s).",
-                        label,
-                        runType,
-                        maxAttempts,
-                        exc.__class__.__name__,
-                        exc,
-                        exc_info=True,
-                    )
-                else:
-                    log.exception("%s (%s) failed.", label, runType)
-                return
+        return
 
     async def _runRecruitmentPayoutIfDue(self, now: datetime) -> None:
-        if self._isPaused():
+        if self._isPaused() or self.recruitmentService is None:
             return
         if not self.automaticRecruitmentPayoutEnabled():
             return
@@ -526,7 +477,7 @@ class MaintenanceCoordinator:
 
         result = await self.recruitmentService.processPendingPoints()
         resetRows = 0
-        if getattr(self.config, "recruitmentSpreadsheetId", ""):
+        if getattr(self.config, "recruitmentSpreadsheetId", "") and self.recruitmentSheets is not None:
             maxAttempts = max(1, int(getattr(self.config, "orbatMaintenanceMaxAttempts", 3)))
             retryBaseDelaySec = float(getattr(self.config, "orbatMaintenanceRetryBaseDelaySec", 20))
             resetResult: dict[str, Any] = {}
@@ -592,6 +543,8 @@ class MaintenanceCoordinator:
             return
         if not bool(getattr(self.config, "sessionExpiryEnabled", True)):
             return
+        if self.sessionService is None:
+            return
 
         checkIntervalSec = max(30, int(getattr(self.config, "sessionExpiryCheckIntervalSec", 300) or 300))
         maxAgeHours = max(1, int(getattr(self.config, "sessionExpiryHours", 48) or 48))
@@ -611,7 +564,8 @@ class MaintenanceCoordinator:
 
         for sessionId in expiredSessionIds:
             try:
-                await self.sessionViews.updateSessionMessage(self.botClient, int(sessionId))
+                if self.sessionViews is not None:
+                    await self.sessionViews.updateSessionMessage(self.botClient, int(sessionId))
             except Exception:
                 log.exception("Failed to refresh expired session message for session %s.", sessionId)
 
@@ -623,98 +577,10 @@ class MaintenanceCoordinator:
         )
 
     async def pruneBgIntelligenceReportsIfDue(self, *, force: bool = False) -> None:
-        if self._isPaused():
-            return
-
-        retentionHours = int(getattr(self.config, "bgIntelligenceReportRetentionHours", 24) or 24)
-        if retentionHours <= 0:
-            return
-        indexRetentionDays = int(getattr(self.config, "bgIntelligenceReportIndexRetentionDays", 90) or 90)
-        graphRetentionDays = int(getattr(self.config, "bgIntelligenceIdentityGraphRetentionDays", 365) or 365)
-        checkIntervalSec = max(
-            300,
-            int(getattr(self.config, "bgIntelligenceReportPruneCheckIntervalSec", 3600) or 3600),
-        )
-        now = datetime.now(timezone.utc)
-        if (
-            not force
-            and self._lastBgIntelPruneAt is not None
-            and (now - self._lastBgIntelPruneAt).total_seconds() < checkIntervalSec
-        ):
-            return
-
-        self._lastBgIntelPruneAt = now
-        from features.staff.bgIntelligence import service as bgIntelligenceService
-
-        deletedReports = await bgIntelligenceService.pruneExpiredReports(
-            keepHours=retentionHours,
-            keepIndexDays=indexRetentionDays,
-            keepIdentityGraphDays=graphRetentionDays,
-        )
-        if deletedReports > 0:
-            log.info(
-                "BG intelligence retention: deleted %d expired report(s) older than %d hour(s).",
-                deletedReports,
-                retentionHours,
-            )
+        return
 
     async def syncBgItemReviewSpreadsheetsIfDue(self, *, force: bool = False) -> None:
-        if self._isPaused():
-            return
-        if not bool(getattr(self.config, "bgItemReviewSpreadsheetSyncEnabled", True)):
-            return
-
-        checkIntervalSec = max(
-            60,
-            int(getattr(self.config, "bgItemReviewSpreadsheetSyncIntervalSec", 300) or 300),
-        )
-        now = datetime.now(timezone.utc)
-
-        from features.staff.bgItemReview import spreadsheetSync as bgItemReviewSpreadsheetSync
-
-        if self._lastBgItemReviewSpreadsheetSyncAt is None:
-            if not force:
-                self._lastBgItemReviewSpreadsheetSyncAt = now
-                return
-        if (
-            not force
-            and self._lastBgItemReviewSpreadsheetSyncAt is not None
-            and (now - self._lastBgItemReviewSpreadsheetSyncAt).total_seconds() < checkIntervalSec
-        ):
-            return
-
-        self._lastBgItemReviewSpreadsheetSyncAt = now
-        lookbackDays = bgItemReviewSpreadsheetSync._recurringLookbackDays()
-        if force or self._bgItemReviewSpreadsheetStartupCatchupPending:
-            lookbackDays = bgItemReviewSpreadsheetSync._startupLookbackDays()
-        result = await bgItemReviewSpreadsheetSync.syncDeniedSpreadsheetRows(
-            self.botClient,
-            lookbackDays=lookbackDays,
-        )
-        self._bgItemReviewSpreadsheetStartupCatchupPending = False
-        if str(result.get("reason") or "").strip():
-            log.warning(
-                "BG item review spreadsheet sync: %s",
-                str(result.get("reason") or "").strip(),
-            )
-            return
-
-        createdCount = int(result.get("created") or 0)
-        existingCount = int(result.get("existing") or 0)
-        errorCount = int(result.get("errors") or 0)
-        deniedCount = int(result.get("denied") or 0)
-        if createdCount > 0 or existingCount > 0 or errorCount > 0 or deniedCount > 0:
-            log.info(
-                "BG item review spreadsheet sync: lookbackDays=%d files=%d rows=%d denied=%d created=%d existing=%d known=%d errors=%d",
-                int(result.get("lookbackDays") or lookbackDays),
-                int(result.get("files") or 0),
-                int(result.get("rows") or 0),
-                deniedCount,
-                createdCount,
-                existingCount,
-                int(result.get("known") or 0),
-                errorCount,
-            )
+        return
 
     async def runGlobalOrbatUpdateLoop(self) -> None:
         await self.botClient.wait_until_ready()
@@ -732,17 +598,18 @@ class MaintenanceCoordinator:
                 await self.pruneBgIntelligenceReportsIfDue()
                 await self.syncBgItemReviewSpreadsheetsIfDue()
                 scheduled = self._latestWeeklyRunAtOrBefore(now, hour, minute, weekday)
-                lastRunRaw = await self.recruitmentService.getSetting("orbatMaintenanceLastRun")
-                lastRun = self._parseIsoDatetime(lastRunRaw)
-                if now >= scheduled and (not lastRun or lastRun < scheduled):
-                    await self.runOrbatMaintenance("weekly")
-                    await self.recruitmentService.setSetting("orbatMaintenanceLastRun", now.isoformat())
+                if self.recruitmentService is not None:
+                    lastRunRaw = await self.recruitmentService.getSetting("orbatMaintenanceLastRun")
+                    lastRun = self._parseIsoDatetime(lastRunRaw)
+                    if now >= scheduled and (not lastRun or lastRun < scheduled):
+                        await self.runOrbatMaintenance("weekly")
+                        await self.recruitmentService.setSetting("orbatMaintenanceLastRun", now.isoformat())
 
-                if now >= scheduled:
-                    await self._runWeeklyServerSnapshotsIfDue(now, scheduled)
+                    if now >= scheduled:
+                        await self._runWeeklyServerSnapshotsIfDue(now, scheduled)
 
-                await self._runRecruitmentPayoutIfDue(now)
-                await self._runAutomationReportsIfDue(now, scheduled)
+                    await self._runRecruitmentPayoutIfDue(now)
+                    await self._runAutomationReportsIfDue(now, scheduled)
             except Exception:
                 log.exception("Global ORBAT update loop error.")
             await asyncio.sleep(max(15, checkIntervalSec))
@@ -753,28 +620,30 @@ class MaintenanceCoordinator:
         if delaySec > 0:
             await asyncio.sleep(delaySec)
         try:
-            self.lastConfigSanitySummary = await self.taskBudgeter.runLowPriorityDiscord(
-                lambda: self.configSanity.runConfigSanityCheck(self.botClient)
-            )
-            if isinstance(self.lastConfigSanitySummary, dict):
-                warningCount = int(self.lastConfigSanitySummary.get("warningCount", 0) or 0)
-                errorCount = int(self.lastConfigSanitySummary.get("errorCount", 0) or 0)
-                if warningCount or errorCount:
-                    log.warning(
-                        "Config sanity check: errors=%d warnings=%d",
-                        errorCount,
-                        warningCount,
-                    )
-                else:
-                    log.info("Config sanity check: no issues found.")
+            if self.configSanity is not None and self.taskBudgeter is not None:
+                self.lastConfigSanitySummary = await self.taskBudgeter.runLowPriorityDiscord(
+                    lambda: self.configSanity.runConfigSanityCheck(self.botClient)
+                )
+                if isinstance(self.lastConfigSanitySummary, dict):
+                    warningCount = int(self.lastConfigSanitySummary.get("warningCount", 0) or 0)
+                    errorCount = int(self.lastConfigSanitySummary.get("errorCount", 0) or 0)
+                    if warningCount or errorCount:
+                        log.warning(
+                            "Config sanity check: errors=%d warnings=%d",
+                            errorCount,
+                            warningCount,
+                        )
+                    else:
+                        log.info("Config sanity check: no issues found.")
 
             await self.expireStaleSessionsIfDue(force=True)
             await self.pruneBgIntelligenceReportsIfDue(force=True)
             await self.runOrbatMaintenance("startup")
-            await self.recruitmentService.setSetting(
-                "orbatMaintenanceLastRun",
-                datetime.now(timezone.utc).isoformat(),
-            )
+            if self.recruitmentService is not None:
+                await self.recruitmentService.setSetting(
+                    "orbatMaintenanceLastRun",
+                    datetime.now(timezone.utc).isoformat(),
+                )
         except Exception:
             log.exception("ORBAT maintenance (startup) failed.")
 

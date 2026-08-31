@@ -84,6 +84,8 @@ def buildEmbed(status: MinecraftStatus) -> discord.Embed:
 
 
 def canRunCommand(member: object) -> bool:
+    if getattr(getattr(member, "guild_permissions", None), "administrator", False):
+        return True
     return runtimePermissions.hasAnyRole(member, minecraftAllowedRoleIds)
 
 

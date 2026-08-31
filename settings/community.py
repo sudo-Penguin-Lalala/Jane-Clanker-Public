@@ -5,116 +5,6 @@ from .staff import *
 from .operations import *
 from .env import _envFlag, _envInt, _envText
 
-# == Recruitment / ANRORS ==
-recruitmentChannelId = 0
-recruitmentTimeLogReviewChannelId = 0
-recruitmentPatrolReviewChannelId = 0
-recruitmentPatrolEvidenceChannelId = 0
-recruitmentCommandGuildIds = []
-recruitmentSourceGuildId = serverId
-
-# Optional: roles allowed to host /recruitment-patrol.
-# If empty, this falls back to recruiterRoleId permission.
-recruitmentPatrolGroupHostRoleIds = []
-
-recruitmentPointsBase = 2
-recruitmentPointsOrientationBonus = 3
-recruitmentPointsPer15Minutes = 1
-recruitmentGroupPatrolPoints = 6
-recruitmentPatrolMaxDurationMinutes = 240
-recruitmentAutoDetectOrientation = True
-recruitmentDivisionKeyAliases = ["recruitment", "anrors"]
-
-# New member defaults.
-recruitmentMembersRankOrder = [
-    "Recruitment Supervisor",
-    "Lead Recruiter",
-    "Senior Recruiter",
-    "Recruiter",
-]
-recruitmentNewMemberRank = "Recruiter"
-recruitmentNewMemberQuota = 0
-recruitmentNewMemberStatus = "Active"
-recruitmentManagerQuotaPatrols = 4
-recruitmentEmployeeQuotaPoints = 8
-
-# Optional hardcoded cosmetic/footer row. Keep 0 to auto-detect the last non-empty row.
-recruitmentFooterRow = 0
-
-# Recruitment ORBAT ranks / sections.
-recruitmentAllowedRanks = [
-    "Commissioner 1 IC",
-    "Comissioner 1 IC",
-    "Head Recruiter 1 IC",
-    "Head Recruiter 2 IC",
-    "Head Recruiter 3 IC",
-    "Head Recruiter 4 IC",
-    "Recruitment Manager",
-    "Recruitment Supervisor",
-    "Lead Recruiter",
-    "Senior Recruiter",
-    "Recruiter",
-]
-
-recruitmentSectionHeaders = [
-    "High Command",
-    "Managers",
-    "Employees",
-    "Quota not enforced (After 10th)",
-    "Dept. Lead",
-    "Members",
-]
-
-# Section header used for regular recruiter rows.
-recruitmentMembersSectionHeaderCandidates = ["Employees", "Members"]
-
-# Quota status values for ANRORS quota column (F).
-recruitmentQuotaStatusValues = [
-    "Completed",
-    "Incomplete",
-    "Excused",
-    "Failed",
-    "Exempt",
-]
-
-
-# == ANRD Payments ==
-anrdPaymentReviewChannelId = 0
-
-anrdPaymentSubmitterRoleIds = []
-anrdPaymentReviewerRoleIds = []
-
-# ANRD payment manager mapping (ANRD tab, lower section).
-anrdMembersStartRow = 3
-anrdMembersEndRow = 49
-anrdPaymentManagerStartRow = 52
-anrdPaymentManagerScanEndRow = 260
-anrdDeveloperMonthlyCap = 1200
-anrdContributorMonthlyCap = 2000
-anrdDeveloperEligibleRanks = [
-    "Development Project Lead",
-    "Senior Developer",
-    "Developer",
-]
-anrdDeveloperUnlimitedRanks = [
-    "Senior Developer",
-]
-anrdContributorRanks = [
-    "Contributer",
-    "Contributor",
-    "Probationary",
-]
-
-
-# == Ribbon System ==
-ribbonRulesPath = "configData/ribbons.json"
-ribbonReviewChannelId = 0
-ribbonApprovedOutputChannelId = 0
-
-ribbonManagerRoleIds = []
-ribbonRequestPingRoleIds = []
-
-
 # == Best Of ==
 bestOfCommandRoleIds = []
 bestOfRobloxLookupEnabled = True
@@ -128,7 +18,7 @@ bestOfFormerHrRoleId = 0
 bestOfHrRoleId = highRankRoleId
 bestOfFormerAnrocomRoleId = 0
 bestOfFormerAnrocomRoleIds = []
-bestOfCommandStaffRoleId = commandStaffRoleId
+bestOfCommandStaffRoleId = 0
 bestOfAnrocomRoleIds = []
 
 
@@ -141,35 +31,11 @@ hallIgnoreBotMessages = True
 hallAllowedCategoryIds = []
 
 
-# == Cohost ==
-cohostAllowedRoleIds = []
-cohostSupervisorRoleId = 0
-cohostSupervisorRoleName = "supervisor eligible"
-cohostSroRoleId = 0
-cohostStaRoleId = 0
-cohostSlotsSolo = 2
-cohostSlotsEmergency = 2
-cohostSlotsTurbine = 2
-cohostSlotsGrid = 4
-cohostSlotsShift = 2
-
-
 # == Voice Chat ==
-_canCreateVoiceChatAll = [
-    1376949919100698814,
-    1376949984750206986,
-    1383522027251699772,
-    1470914397424717825,
-]
+_canCreateVoiceChatAll = []
+_canCreateVoiceChatBasic = []
 
-_canCreateVoiceChatBasic = [
-    1376949919100698814,
-    1376949984750206986,
-    1383522027251699772,
-    1456604223407001601,
-]
-
-voiceChannelCreationCategory = 1481169790990029002
+voiceChannelCreationCategory = 0
 voiceChatRebalanceMaxPositionEdits = 4
 voiceChatRebalanceEditDelaySec = 1.25
 permanentVoiceChatChannelIds = []
@@ -177,7 +43,7 @@ permanentVoiceChatChannelIds = []
 
 # == Roblox / Identity ==
 robloxGroupId = 0
-robloxGroupUrl = "https://www.roblox.com/communities/36000077/ANRO-Advanced-Noobic-Reactor-Operations#!/about"
+robloxGroupUrl = ""
 
 # Jane Identity links Discord users to Roblox accounts through a Discord-started
 # Roblox OAuth flow. The web server only handles the OAuth callback.
@@ -226,7 +92,6 @@ roverCacheMaxEntries = 2000
 roverIdentityDbTimeoutSec = 1.5
 robloxHttpTimeoutSec = 10
 robloxGroupRolesCacheTtlSec = 3600
-recruitmentRoverLookupConcurrency = 8
 
 
 # == Roblox Flagging / Scanning ==
@@ -276,92 +141,14 @@ skinCooldownBypassRoleIds = []
 # Jane is still a single bot process, but org-specific settings now live behind
 # profile keys so other groups can be added without turning config.py into a
 # bigger singleton mess than it already is.
-defaultOrganizationKey = "ANRO"
-organizationCommandFeatureMap = {
-    "orientation": "anro-sessions",
-    "bg-add": "anro-bgc",
-    "bgcheck": "anro-bgc",
-    "bg-intel": "anro-bgc",
-    "trainingstats": "anro-training-logs",
-    "hoststats": "anro-training-logs",
-    "mirrortraininghistory": "anro-training-logs",
-    "bgleaderboard": "anro-bgc",
-    "bg-leaderboard": "anro-bgc",
-    "recruitment": "anro-recruitment",
-    "recruitment-time-log": "anro-recruitment",
-    "recruitment-patrol": "anro-recruitment",
-    "orbat": "anro-orbat",
-    "orbat-request": "anro-orbat",
-    "orbat-pending": "anro-orbat",
-    "loa-request": "anro-orbat",
-}
-_anroOrganizationGuildIds = sorted(
-    {
-        int(guildId)
-        for guildId in (
-            list(allowedCommandGuildIds)
-            + [
-                serverId,
-                serverIdTesting,
-                bgCheckAdultReviewGuildId,
-                bgCheckMinorReviewGuildId,
-            ]
-        )
-        if int(guildId) > 0
-    }
-)
-organizationProfiles = {
-    "ANRO": {
-        "label": "ANRO",
-        "primaryGuildId": serverId,
-        "guildIds": list(_anroOrganizationGuildIds),
-        "enabledFeatures": [
-            "anro-sessions",
-            "anro-bgc",
-            "anro-training-logs",
-            "anro-recruitment",
-            "anro-orbat",
-        ],
-        "trainingResultsChannelId": trainingResultsChannelId,
-        "trainingArchiveChannelId": trainingArchiveChannelId,
-        "trainingLogBackfillDays": trainingLogBackfillDays,
-        "trainingLogStartupMirrorNewRows": trainingLogStartupMirrorNewRows,
-        "trainingSummaryWebhookName": trainingSummaryWebhookName,
-        "trainingMirrorWebhookName": trainingMirrorWebhookName,
-        "startupGreetingChannelId": startupGreetingChannelId,
-        "bgCheckChannelId": bgCheckChannelId,
-        "bgCheckAdultReviewGuildId": bgCheckAdultReviewGuildId,
-        "bgCheckAdultReviewChannelId": bgCheckAdultReviewChannelId,
-        "bgCheckMinorReviewGuildId": bgCheckMinorReviewGuildId,
-        "bgCheckMinorReviewChannelId": bgCheckMinorReviewChannelId,
-        "bgCheckMinorReviewRoleId": bgCheckMinorReviewRoleId,
-        "bgCheckMinorReviewRoleIds": list(bgCheckMinorReviewRoleIds),
-        "bgCheckSourceGuildId": bgCheckSourceGuildId,
-        "bgCheckSpreadsheetTemplateId": bgCheckSpreadsheetTemplateId,
-        "bgCheckSpreadsheetFolderId": bgCheckSpreadsheetFolderId,
-        "bgCheckSpreadsheetSheetName": bgCheckSpreadsheetSheetName,
-        "bgMinorAgeRoleIds": list(bgMinorAgeRoleIds),
-        "bgMajorAgeRoleIds": list(bgMajorAgeRoleIds),
-        "bgMinorAgeGroups": list(bgMinorAgeGroups),
-        "bgAdultAgeGroups": list(bgAdultAgeGroups),
-        "bgUnknownDefaultsToMinor": bool(bgUnknownDefaultsToMinor),
-        "moderatorRoleId": moderatorRoleId,
-        "bgReviewModeratorRoleId": bgReviewModeratorRoleId,
-        "newApplicantRoleId": newApplicantRoleId,
-        "pendingBgRoleId": pendingBgRoleId,
-        "robloxGroupId": robloxGroupId,
-        "robloxGroupUrl": robloxGroupUrl,
-    },
-}
-guildOrganizationKeys = {
-    int(guildId): defaultOrganizationKey
-    for guildId in list(_anroOrganizationGuildIds)
-    if int(guildId) > 0
-}
+defaultOrganizationKey = ""
+organizationCommandFeatureMap = {}
+organizationProfiles = {}
+guildOrganizationKeys = {}
 
 minecraftAuthenticationToken = _envText("MINECRAFT_RCON_TOKEN")
-minecraftRCONAddress = "unease-year.with.playit.plus"
-minecraftRCONPort = 1395
+minecraftRCONAddress = ""
+minecraftRCONPort = 25575
 minecraftRCONTimeoutSeconds = 5
 minecraftServerMaxPlayersFallback = 60
 minecraftAllowedRoleIds = []

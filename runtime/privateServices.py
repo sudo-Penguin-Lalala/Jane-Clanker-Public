@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -56,41 +56,15 @@ class PrivateServices:
 def loadPrivateServices(*, configModule: Any) -> PrivateServices:
     privateExtensionsEnabled = bool(getattr(configModule, "enablePrivateExtensions", True))
 
-    departmentOrbatSheets = _tryImportModule(
-        "features.staff.departmentOrbat.sheets",
-        enabled=privateExtensionsEnabled,
-    ) or _DepartmentOrbatSheetsFallback()
-    orbatMultiRegistry = _tryImportModule(
-        "features.staff.orbat.multiRegistry",
-        enabled=privateExtensionsEnabled,
-    )
-    orbatRoleSync = _tryImportModule(
-        "features.staff.orbat.roleSync",
-        enabled=privateExtensionsEnabled,
-    ) or _OrbatRoleSyncFallback()
-    orbatSheets = _tryImportModule(
-        "features.staff.orbat.sheets",
-        enabled=privateExtensionsEnabled,
-    ) or _OrbatSheetsFallback()
-
     return PrivateServices(
         privateExtensionsEnabled=privateExtensionsEnabled,
-        departmentOrbatSheets=departmentOrbatSheets,
-        orbatSheets=orbatSheets,
-        orbatRoleSync=orbatRoleSync,
-        loadMultiOrbatRegistry=(
-            getattr(orbatMultiRegistry, "loadMultiOrbatRegistry", None)
-            or _loadMultiOrbatRegistryFallback
-        ),
-        orbatAuditRuntime=_tryImportModule(
-            "runtime.orbatAudit",
-            enabled=privateExtensionsEnabled,
-        ),
-        serverSafetyService=_tryImportModule(
-            "features.operations.serverSafety.service",
-            enabled=privateExtensionsEnabled,
-        ),
-        gitUpdateModule=_tryImportModule("runtime.gitUpdate"),
-        processControlModule=_tryImportModule("runtime.processControl"),
+        departmentOrbatSheets=_DepartmentOrbatSheetsFallback(),
+        orbatSheets=_OrbatSheetsFallback(),
+        orbatRoleSync=_OrbatRoleSyncFallback(),
+        loadMultiOrbatRegistry=_loadMultiOrbatRegistryFallback,
+        orbatAuditRuntime=None,
+        serverSafetyService=None,
+        gitUpdateModule=None,
+        processControlModule=None,
     )
 

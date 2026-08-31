@@ -10,17 +10,6 @@ from runtime.optionalImports import isRequestedModuleMissing
 log = logging.getLogger(__name__)
 
 _coreExtensionNames = [
-    "cogs.staff.sessionCog",
-    "cogs.staff.divisionClockinCog",
-    "cogs.staff.cohostCog",
-    "cogs.staff.recruitmentCog",
-    "cogs.staff.bgFlagCog",
-    "cogs.staff.bgIntelligenceCog",
-    "cogs.applicationsCog",
-    "cogs.staff.ribbonCog",
-    "cogs.staff.anrdPaymentCog",
-    "cogs.operations.federationCog",
-    "cogs.staff.projectCog",
     "cogs.community.publicUtilityCog",
     "cogs.community.eventCog",
     "cogs.community.bestOfCog",
@@ -31,7 +20,6 @@ _coreExtensionNames = [
     "cogs.community.reminderCog",
     "cogs.community.suggestionCog",
     "cogs.community.minecraftCog",
-    "cogs.operations.opsCog",
     "cogs.operations.curfewCog",
     "cogs.operations.jailCog",
     "cogs.staff.voiceChatCog",

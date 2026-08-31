@@ -9,7 +9,6 @@ import discord
 
 from db.sqlite import fetchAll
 from features.community.events import service as eventService
-from features.staff.applications import service as applicationsService
 
 log = logging.getLogger(__name__)
 

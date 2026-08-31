@@ -9,7 +9,6 @@ import aiohttp
 import discord
 
 from db.sqlite import fetchOne
-from features.staff.sessions.Roblox import robloxUsers
 
 
 _pairDbNamesActive = False

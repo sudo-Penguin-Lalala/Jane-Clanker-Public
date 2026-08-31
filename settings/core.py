@@ -16,34 +16,11 @@ testGuildIds = []
 
 # == Credentials / External APIs ==
 # Keep API keys and credential paths in `.env`, not in versioned config.
-# Roblox, RoVer, and Sheets credentials.
+# Roblox and RoVer credentials.
 robloxOpenCloudApiKey = _envText("ROBLOX_OPEN_CLOUD_API_KEY")
 roverApiKey = _envText("ROVER_API_KEY")
-orbatGoogleCredentialsPath = _envText("ORBAT_GOOGLE_CREDENTIALS_PATH")
-googleOauthClientSecretsPath = _envText("GOOGLE_OAUTH_CLIENT_SECRETS_PATH")
-googleOauthTokenPath = _envText("GOOGLE_OAUTH_TOKEN_PATH", "localOnly/credentials/google-oauth-token.json")
-
-# Optional dedicated inventory key.
-robloxInventoryApiKey = _envText("ROBLOX_INVENTORY_API_KEY", robloxOpenCloudApiKey)
-
-# Feature-specific external service credentials.
-bgIntelligenceTaseApiToken = _envText("TASE_API_TOKEN")
-bgIntelligenceMocoApiKey = _envText("MOCO_API_KEY")
 gamblingApiToken = _envText("JANE_GAMBLING_API_TOKEN")
-freedcampApiKey = _envText("FREEDCAMP_API_KEY")
-freedcampSecret = _envText("FREEDCAMP_SECRET")
 
-# Optional orientation clock-in HTTP endpoint. The old generic SQL API
-# is intentionally no longer registered; API callers must use feature-specific
-# routes that preserve Jane's service boundaries.
-_legacyOrientationApiToken = _envText("JANE_FLASK_API_TOKEN")
-orientationApiToken = _envText("JANE_ORIENTATION_API_TOKEN", _legacyOrientationApiToken)
-orientationApiEnabled = _envFlag("JANE_ORIENTATION_API_ENABLED", bool(orientationApiToken))
-orientationApiHost = _envText(
-    "JANE_ORIENTATION_API_HOST",
-    "0.0.0.0" if _legacyOrientationApiToken else "127.0.0.1",
-)
-orientationApiPort = _envInt("JANE_ORIENTATION_API_PORT", 24003)
 
 # == Command Access / Runtime ==
 # Allowed servers for command usage.
@@ -74,7 +51,6 @@ runtimeControlAllowedUserIds = []
 permissionSimulatorGuildIds = []
 
 # Runtime task tuning.
-sessionMessageUpdateDebounceSec = 2.0
 runtimeBudgetRobloxConcurrency = 6
 runtimeBudgetLowPriorityRobloxPriority = 50
 runtimeBudgetLowestPriorityRobloxPriority = 1000
@@ -104,15 +80,11 @@ dbRuntimeDiagnosticReportPath = "runtime/data/db-state/latest.json"
 runtimeTaskStatsFlushIntervalSec = 30
 runtimeTaskStatsFlushDirtyCount = 25
 discordEntityCacheTtlSec = 300
-bgQueueUpdateConcurrency = 2
-sessionMessageUpdateConcurrency = 2
-bgQueueRepostConcurrency = 1
 retryQueuePollIntervalSec = 6
 retryQueueInitialDelaySec = 30
 webhookHealthCheckIntervalSec = 600
 webhookHealthInitialDelaySec = 180
 webhookHealthMaxRowsPerRun = 50
-roleOrbatSyncBackgroundDelaySec = 5
 reminderDueBatchLimit = 20
 reminderDeliveryConcurrency = 3
 generalErrorLogDir = ""
@@ -153,58 +125,14 @@ configSanityOptionalIdKeys = [
     "bestOfFormerHrRoleId",
     "bestOfFormerAnrocomRoleId",
     "bestOfAnrocomRoleId",
-    "projectHodRoleIds",
-    "projectAssistantDirectorRoleIds",
 ]
 
 
 # == Shared Role IDs ==
 # Core moderation / training roles.
-moderatorRoleId = 0  # BG Check Certified
-bgReviewModeratorRoleId = 0  # BG reviewers in the review server
-instructorRoleId = 0  # Training and Qualifications
-newApplicantRoleId = 0  # New Applicant
-pendingBgRoleId = 0  # Pending Background Check
+moderatorRoleId = 0
+instructorRoleId = 0
 
 # Shared rank / clearance roles.
 middleRankRoleId = 0
 highRankRoleId = 0
-cnoRoleId = 0
-dooRoleId = 0
-ddooRoleId = 0
-sectionChiefRoleId = 0
-commandStaffRoleId = 0
-foiRoleId = 0
-crsRoleId = 0
-shiftSupervisorRoleId = 0
-juniorSuRoleId = 0
-msbRoleId = 0
-
-# Recruitment / ANRORS roles.
-recruiterRoleId = 0  # CE Recruitment submitter role
-recruitmentReviewerRoleId = 0
-recruitmentReviewerPingRoleId = 0
-anrorsMemberRoleId = 0  # ANRO Recruitment Services
-anrorsRmPlusRoleId = 0  # ANRORS RM+
-
-# Honor Guard roles.
-honorGuardReviewerRoleId = 0 # HG Personnel Office
-honorGuardReviewerPingRoleId = 0 # HG Personnel Office
-honorGuardRoleId = 0 # ANROHG Division
-honorGuardSeniorGuardsmanRoleIds = []
-honorGuardPlatoonSergeantRoleId = 0 # Platoon Sergeant
-honorGuardParadeOfficerPlusRoleIds = []
-
-# ANRD role placeholders (for future role -> ORBAT rank sync).
-anrdRoleProbationaryId = 0
-anrdRoleContributorId = 0
-anrdRoleSeniorContributorId = 0
-anrdRoleDeveloperId = 0
-anrdRoleSeniorDeveloperId = 0
-anrdRoleDevelopmentProjectLeadId = 0
-# Only ORBAT ranks (no Discord role mapping):
-# - Development Oversight
-# - Development Creator and Director
-anrdRoleDevelopmentOversightId = 0
-anrdRoleDevelopmentCreatorAndDirectorId = 0
-anrdFundingBenefactorsRoleId = 0

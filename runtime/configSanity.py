@@ -24,21 +24,51 @@ def _normalizeSingleId(value: Any) -> int:
     return parsed if parsed > 0 else 0
 
 
+_DELETED_KEY_PREFIXES = (
+    "recruitment",
+    "anrors",
+    "recruiter",
+    "honorguard",
+    "hg",
+    "anrd",
+    "orbat",
+    "loa",
+    "dept",
+    "bg",
+    "pendingbg",
+    "session",
+    "training",
+    "instructor",
+    "newapplicant",
+    "cno",
+    "doo",
+    "ddoo",
+    "sectionchief",
+    "commandstaff",
+    "foi",
+    "crs",
+    "shiftsupervisor",
+    "juniorsu",
+    "msb",
+    "middlerank",
+    "highrank",
+    "moderatorrole",
+    "serversafety",
+    "division",
+    "freedcamp",
+    "project",
+    "masterlinkhub",
+)
+
+
+def _isDeletedFeatureKey(key: str) -> bool:
+    lower = key.lower()
+    return any(lower.startswith(prefix) for prefix in _DELETED_KEY_PREFIXES)
+
+
 def _optionalIdKeys() -> set[str]:
     configured = getattr(config, "configSanityOptionalIdKeys", []) or []
     normalized = {str(value).strip() for value in configured if str(value).strip()}
-    normalized.update(
-        {
-            "anrdRoleProbationaryId",
-            "anrdRoleContributorId",
-            "anrdRoleDeveloperId",
-            "anrdRoleSeniorDeveloperId",
-            "anrdRoleDevelopmentProjectLeadId",
-            "anrdRoleDevelopmentOversightId",
-            "anrdRoleDevelopmentCreatorAndDirectorId",
-            "anrdFundingBenefactorsRoleId",
-        }
-    )
     return normalized
 
 
@@ -51,6 +81,8 @@ def _iterSingleIdKeys() -> list[str]:
             continue
         if name.endswith("Ids"):
             continue
+        if _isDeletedFeatureKey(name):
+            continue
         out.append(name)
     return sorted(set(out))
 
@@ -61,6 +93,8 @@ def _iterListIdKeys() -> list[str]:
         if name.startswith("_"):
             continue
         if not name.endswith("Ids"):
+            continue
+        if _isDeletedFeatureKey(name):
             continue
         out.append(name)
     return sorted(set(out))
@@ -160,29 +194,6 @@ async def runConfigSanityCheck(bot: discord.Client) -> dict[str, Any]:
                         f"Role {normalized} was not found in server {getattr(config, 'serverId', 0)}.",
                     )
                 )
-
-    gamblingApiEnabled = bool(getattr(config, "gamblingApiEnabled", False))
-    gamblingApiToken = str(getattr(config, "gamblingApiToken", "") or "").strip()
-    gamblingApiTokens = getattr(config, "gamblingApiTokens", []) or []
-    hasExtraApiTokens = isinstance(gamblingApiTokens, (list, tuple, set)) and any(
-        str(value).strip() for value in gamblingApiTokens
-    )
-    if gamblingApiEnabled and not gamblingApiToken and not hasExtraApiTokens:
-        issues.append(
-            ConfigIssue(
-                "warning",
-                "gamblingApiToken",
-                "Gambling API is enabled but no API token is configured.",
-            )
-        )
-    if gamblingApiEnabled and gamblingApiToken in {"change-me", ":durr:"}:
-        issues.append(
-            ConfigIssue(
-                "warning",
-                "gamblingApiToken",
-                "Gambling API token looks like a placeholder; set a unique secret.",
-            )
-        )
 
     warningCount = sum(1 for issue in issues if issue.level == "warning")
     errorCount = sum(1 for issue in issues if issue.level == "error")

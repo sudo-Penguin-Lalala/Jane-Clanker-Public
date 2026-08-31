@@ -113,9 +113,7 @@ class HumanMessageRouter:
 
         pausedHandlers = {
             "!allowserver": textRouter.handleAllowServer,
-            "!copyserver": textRouter.handleCopyServer,
             "!shutdown": textRouter.handleShutdown,
-            "!mirrortraininghistory": textRouter.handleMirrorTrainingHistory,
             "!janeterminal": textRouter.handleJaneTerminal,
         }
         handler = pausedHandlers.get(token)
@@ -162,8 +160,6 @@ class HumanMessageRouter:
             return
         if await textRouter.handleAllowServer(message):
             return
-        if await textRouter.handleMirrorTrainingHistory(message):
-            return
 
         if token in self.manualTextCommandTokens and not self.isGuildAllowedForCommands(guildId):
             await self._rejectUnapprovedGuild(message, token=token, guildId=guildId)
@@ -198,14 +194,9 @@ class HumanMessageRouter:
         orderedHandlers = (
             textRouter.handleUsernameToUserId,
             textRouter.handleChannelPurge,
-            textRouter.handlePairDbNamesCommand,
-            self.trainingStatsHandler,
             textRouter.handleJaneTerminal,
             textRouter.handleShutdown,
-            textRouter.handleCopyServer,
             textRouter.handleJaneRuntime,
-            textRouter.handleBgLeaderboardCommand,
-            textRouter.handleJaneFlagSync,
             textRouter.handlePermissionSimulatorCommand,
         )
         for handler in orderedHandlers:

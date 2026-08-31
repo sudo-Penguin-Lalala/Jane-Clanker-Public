@@ -25,11 +25,11 @@ class BootstrapCoordinator:
         botClient: Any,
         configModule: Any,
         initDbFn: Any,
-        loadMultiRegistryFn: Any,
-        sessionViews: Any,
+        loadMultiRegistryFn: Any = None,
+        sessionViews: Any = None,
         maintenanceCoordinator: Any,
         taskBudgeter: Any,
-        recruitmentService: Any,
+        recruitmentService: Any = None,
         helpCommandsModule: Any,
         pluginRegistry: Any,
         extensionNames: list[str],
@@ -246,32 +246,13 @@ class BootstrapCoordinator:
                 )
             except Exception:
                 log.exception("Failed to capture runtime DB startup snapshot.")
-        try:
-            multiRegistry = self.loadMultiRegistry()
-            log.info(
-                "Multi-ORBAT registry loaded: %d sheet(s): %s",
-                len(multiRegistry),
-                ", ".join(sorted(multiRegistry.keys())),
-            )
-        except Exception:
-            log.exception("Failed to load multi-ORBAT registry.")
 
         for extensionName in self.extensionNames:
             await self.botClient.load_extension(extensionName)
             self.pluginRegistry.registerExtension(extensionName)
 
-        try:
-            restoredViews = await self.sessionViews.restorePersistentViews(self.botClient)
-            log.info(
-                "Session persistent views restored: sessions=%d, bgQueues=%d, bgChecks=%d",
-                int(restoredViews.get("sessions", 0)),
-                int(restoredViews.get("bgQueues", 0)),
-                int(restoredViews.get("bgChecks", 0)),
-            )
-        except Exception:
-            log.exception("Failed to restore session persistent views.")
-
-        self.maintenance.ensureBackgroundTasksStarted()
+        if self.maintenance is not None:
+            self.maintenance.ensureBackgroundTasksStarted()
 
         serverId = os.getenv("DISCORD_GUILD_ID") or str(getattr(self.config, "serverId", "")) or None
         clearGlobal = os.getenv("CLEAR_GLOBAL_COMMANDS")
@@ -323,7 +304,7 @@ class BootstrapCoordinator:
             return
 
         greetingCooldownSec = max(0, int(getattr(self.config, "startupGreetingCooldownSec", 1800) or 1800))
-        if greetingCooldownSec > 0:
+        if greetingCooldownSec > 0 and self.recruitmentService is not None:
             try:
                 lastGreetingRaw = await self.recruitmentService.getSetting("startupGreetingLastSentAt")
                 lastGreetingAt = self._parseIsoDatetime(lastGreetingRaw)
@@ -364,13 +345,14 @@ class BootstrapCoordinator:
         if isinstance(channel, (discord.TextChannel, discord.Thread)):
             try:
                 await self.taskBudgeter.runDiscord(lambda: channel.send("Hi everyone!"))
-                try:
-                    await self.recruitmentService.setSetting(
-                        "startupGreetingLastSentAt",
-                        datetime.now(timezone.utc).isoformat(),
-                    )
-                except Exception:
-                    log.exception("Failed to persist startup greeting timestamp.")
+                if self.recruitmentService is not None:
+                    try:
+                        await self.recruitmentService.setSetting(
+                            "startupGreetingLastSentAt",
+                            datetime.now(timezone.utc).isoformat(),
+                        )
+                    except Exception:
+                        log.exception("Failed to persist startup greeting timestamp.")
                 self.startupGreetingSent = True
             except (discord.Forbidden, discord.HTTPException):
                 log.warning("Startup greeting failed for channel %s.", channelId)

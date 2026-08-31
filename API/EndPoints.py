@@ -7,8 +7,6 @@ from typing import Any
 import discord
 from quart import Quart, Response, jsonify, request
 
-from features.staff.sessions.service import attemptClockIn
-from features.staff.sessions.viewRuntime import requestSessionMessageUpdate
 
 
 log = logging.getLogger(__name__)

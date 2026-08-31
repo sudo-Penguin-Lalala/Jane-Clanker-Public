@@ -53,26 +53,16 @@ def _buildProfile(configModule: Any, key: str, rawProfile: object) -> Organizati
     )
 
 
-def _legacyProfiles(configModule: Any) -> dict[str, OrganizationProfile]:
-    defaultKey = _normalizeOrgKey(getattr(configModule, "defaultOrganizationKey", "DEFAULT"))
-    rawProfile = {
-        "label": defaultKey,
-        "primaryGuildId": getattr(configModule, "serverId", 0),
-        "guildIds": list(getattr(configModule, "allowedCommandGuildIds", []) or []),
-    }
-    return {defaultKey: _buildProfile(configModule, defaultKey, rawProfile)}
-
-
 def getOrganizationProfiles(configModule: Any) -> dict[str, OrganizationProfile]:
     rawProfiles = getattr(configModule, "organizationProfiles", None)
     if not isinstance(rawProfiles, dict) or not rawProfiles:
-        return _legacyProfiles(configModule)
+        return {}
 
     profiles: dict[str, OrganizationProfile] = {}
     for rawKey, rawProfile in rawProfiles.items():
         normalizedKey = _normalizeOrgKey(rawKey)
         profiles[normalizedKey] = _buildProfile(configModule, normalizedKey, rawProfile)
-    return profiles or _legacyProfiles(configModule)
+    return profiles
 
 
 def getDefaultOrganizationKey(configModule: Any) -> str:
@@ -80,11 +70,16 @@ def getDefaultOrganizationKey(configModule: Any) -> str:
     configuredKey = _normalizeOrgKey(getattr(configModule, "defaultOrganizationKey", ""))
     if configuredKey in profiles:
         return configuredKey
-    return next(iter(profiles.keys()), "DEFAULT")
+    if profiles:
+        return next(iter(profiles.keys()))
+    return configuredKey if configuredKey else "DEFAULT"
 
 
 def isGuildAssignedToOrganization(configModule: Any, guildId: object) -> bool:
     profiles = getOrganizationProfiles(configModule)
+    if not profiles:
+        return False
+
     parsedGuildId = _toPositiveInt(guildId)
     if parsedGuildId <= 0:
         return False
@@ -93,7 +88,7 @@ def isGuildAssignedToOrganization(configModule: Any, guildId: object) -> bool:
     explicitKey = rawGuildMap.get(parsedGuildId)
     if explicitKey is None:
         explicitKey = rawGuildMap.get(str(parsedGuildId))
-    if _normalizeOrgKey(explicitKey) in profiles:
+    if explicitKey and _normalizeOrgKey(explicitKey) in profiles:
         return True
 
     for profile in profiles.values():
@@ -131,6 +126,8 @@ def getOrganizationProfile(
     orgKey: object | None = None,
 ) -> OrganizationProfile | None:
     profiles = getOrganizationProfiles(configModule)
+    if not profiles:
+        return None
     if orgKey is not None:
         return profiles.get(_normalizeOrgKey(orgKey))
     if guildId is not None:

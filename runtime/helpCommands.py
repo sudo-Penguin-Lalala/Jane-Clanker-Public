@@ -105,105 +105,13 @@ def slashPermissionHint(path: str) -> str:
     if centralHint:
         return centralHint
 
-    instructorRoleId = runtimePermissions.toPositiveInt(getattr(config, "instructorRoleId", 0))
-    recruiterRoleId = runtimePermissions.toPositiveInt(getattr(config, "recruiterRoleId", 0))
-    bgModRoleId = runtimePermissions.toPositiveInt(getattr(config, "moderatorRoleId", 0))
     mrRoleId = runtimePermissions.toPositiveInt(getattr(config, "middleRankRoleId", 0))
     hrRoleId = runtimePermissions.toPositiveInt(getattr(config, "highRankRoleId", 0))
-    cohostRoles = runtimePermissions.normalizeRoleIds(getattr(config, "cohostAllowedRoleIds", []))
-    appAdminRoles = runtimePermissions.normalizeRoleIds(getattr(config, "divisionApplicationsAdminRoleIds", []))
-    appGlobalReviewerRoles = runtimePermissions.normalizeRoleIds(getattr(config, "divisionApplicationsGlobalReviewerRoleIds", []))
-    anrdSubmitterRoles = runtimePermissions.normalizeRoleIds(getattr(config, "anrdPaymentSubmitterRoleIds", []))
-    divisionClockinRoles = runtimePermissions.normalizeRoleIds(getattr(config, "divisionClockinAllowedRoleIds", []))
-    orbatSubmitterRoles = runtimePermissions.normalizeRoleIds(getattr(config, "orbatSubmitterRoleIds", []))
-    orbatReviewerRoles = runtimePermissions.normalizeRoleIds(getattr(config, "orbatReviewerRoleIds", []))
-    groupPatrolHostRoles = runtimePermissions.normalizeRoleIds(getattr(config, "recruitmentPatrolGroupHostRoleIds", []))
     voiceChatAllRoles = runtimePermissions.normalizeRoleIds(getattr(config, "_canCreateVoiceChatAll", []))
     voiceChatBasicRoles = runtimePermissions.normalizeRoleIds(getattr(config, "_canCreateVoiceChatBasic", []))
-    projectHodRoles = runtimePermissions.normalizeRoleIds(getattr(config, "projectHodRoleIds", []))
-    projectAssistantDirectorRoles = runtimePermissions.normalizeRoleIds(getattr(config, "projectAssistantDirectorRoleIds", []))
     bestOfCommandRoles = runtimePermissions.normalizeRoleIds(getattr(config, "bestOfCommandRoleIds", []))
 
-    applicationPanelRoles = list(appAdminRoles)
-    for roleId in appGlobalReviewerRoles:
-        if roleId not in applicationPanelRoles:
-            applicationPanelRoles.append(roleId)
-    if hrRoleId > 0 and hrRoleId not in applicationPanelRoles:
-        applicationPanelRoles.append(hrRoleId)
-
     hints: dict[str, str] = {
-        "/orientation": (
-            f"Instructor role required ({runtimePermissions.formatRoleIds([instructorRoleId] if instructorRoleId > 0 else [])})."
-        ),
-        "/cohost": f"Cohost roles required ({runtimePermissions.formatRoleIds(cohostRoles)}).",
-        "/recruitment": (
-            f"Recruiter role required ({runtimePermissions.formatRoleIds([recruiterRoleId] if recruiterRoleId > 0 else [])})."
-        ),
-        "/recruitment-time-log": (
-            f"Recruiter role required ({runtimePermissions.formatRoleIds([recruiterRoleId] if recruiterRoleId > 0 else [])})."
-        ),
-        "/recruitment-patrol": (
-            "Group patrol host roles "
-            f"({runtimePermissions.formatRoleIds(groupPatrolHostRoles)})"
-            + (" with recruiter fallback." if groupPatrolHostRoles else ".")
-        ),
-        "/bg-add": (
-            "BG-certified roles required "
-            f"({runtimePermissions.formatRoleIds(sorted(runtimePermissions.getBgCheckCertifiedRoleIds()))})."
-        ),
-        "/bg-flag": f"Moderator role required ({runtimePermissions.formatRoleIds([bgModRoleId] if bgModRoleId > 0 else [])}).",
-        "/orbat-request": (
-            "Requires ORBAT submitter or reviewer roles "
-            f"({runtimePermissions.formatRoleIds(orbatSubmitterRoles + [roleId for roleId in orbatReviewerRoles if roleId not in orbatSubmitterRoles])})."
-        ),
-        "/loa-request": (
-            "Requires ORBAT submitter or reviewer roles "
-            f"({runtimePermissions.formatRoleIds(orbatSubmitterRoles + [roleId for roleId in orbatReviewerRoles if roleId not in orbatSubmitterRoles])})."
-        ),
-        "/applications": (
-            "Application admins, global reviewers, or HR roles "
-            f"({runtimePermissions.formatRoleIds(applicationPanelRoles)}), with admin/manage-server bypass."
-        ),
-        "/applications-hub-post": f"Application admin roles required ({runtimePermissions.formatRoleIds(appAdminRoles)}).",
-        "/applications-hub-post-all": f"Application admin roles required ({runtimePermissions.formatRoleIds(appAdminRoles)}).",
-        "/apps pending": (
-            "Application admins or global reviewers "
-            f"({runtimePermissions.formatRoleIds(appAdminRoles + [roleId for roleId in appGlobalReviewerRoles if roleId not in appAdminRoles])})."
-        ),
-        "/apps stats": (
-            "Application admins or global reviewers "
-            f"({runtimePermissions.formatRoleIds(appAdminRoles + [roleId for roleId in appGlobalReviewerRoles if roleId not in appAdminRoles])})."
-        ),
-        "/apps reopen": (
-            "Application admins or global reviewers "
-            f"({runtimePermissions.formatRoleIds(appAdminRoles + [roleId for roleId in appGlobalReviewerRoles if roleId not in appAdminRoles])})."
-        ),
-        "/apps force-approve": f"Application admin roles required ({runtimePermissions.formatRoleIds(appAdminRoles)}).",
-        "/ribbon request": "Open to all users (cooldown applies for non-managers).",
-        "/request-payment": (
-            "ANRD payment submitter roles required "
-            f"({runtimePermissions.formatRoleIds(anrdSubmitterRoles)}), with admin/manage-server bypass."
-        ),
-        "/division-clockin": (
-            "Division clock-in roles required "
-            f"({runtimePermissions.formatRoleIds(divisionClockinRoles)}), with admin/manage-server bypass."
-        ),
-        "/project create": "Open to members in project-enabled servers.",
-        "/project list": "Open to members in project-enabled servers.",
-        "/project status": "Open to members in project-enabled servers.",
-        "/project submit": "Project creator only, with HOD/admin override.",
-        "/project approve": (
-            "Project HOD roles required "
-            f"({runtimePermissions.formatRoleIds(projectHodRoles)}), with admin/manage-server bypass."
-        ),
-        "/project deny": (
-            "Project HOD roles required "
-            f"({runtimePermissions.formatRoleIds(projectHodRoles)}), with admin/manage-server bypass."
-        ),
-        "/project finalize": (
-            "Project Assistant Director roles required "
-            f"({runtimePermissions.formatRoleIds(projectAssistantDirectorRoles)}), with admin/manage-server bypass."
-        ),
         "/create-voice-chat": (
             "Shift/Supervisor comms require all-access voice roles "
             f"({runtimePermissions.formatRoleIds(voiceChatAllRoles)}); "
@@ -243,13 +151,8 @@ def slashPermissionHint(path: str) -> str:
             f"({runtimePermissions.formatRoleIds(runtimePermissions.normalizeRoleIds(getattr(config, 'suggestionReviewerRoleIds', [])))}) "
             "or administrator/manage-server."
         ),
-        "/federation-link": "Administrator/manage-server only. Test server only.",
-        "/federation-unlink": "Administrator/manage-server only. Test server only.",
-        "/federation-list": "Administrator/manage-server only. Test server only.",
         "/post-role-menu": "Administrator/manage-server only.",
         "/ops": "Configured ops allowlist only.",
-        "/snapshot-menu": "Administrator/manage-server plus configured snapshot allowlist.",
-        "/quarantine": "Administrator/manage-server plus configured recovery allowlist.",
         "/pause": "Configured runtime-control allowlist only.",
         "/restart": "Configured runtime-control allowlist only.",
         "/best-of": (
@@ -270,9 +173,6 @@ def slashPermissionHint(path: str) -> str:
 
 def hiddenCommandHelpEntries() -> list[tuple[str, str, str]]:
     cohostRoles = runtimePermissions.normalizeRoleIds(getattr(config, "cohostAllowedRoleIds", []))
-    bgRoles = sorted(runtimePermissions.getBgCheckCertifiedRoleIds())
-    appControlRoles = runtimePermissions.normalizeRoleIds(getattr(config, "divisionApplicationsControlRoleIds", []))
-    appAdminRoles = runtimePermissions.normalizeRoleIds(getattr(config, "divisionApplicationsAdminRoleIds", []))
     mrRoleId = runtimePermissions.toPositiveInt(getattr(config, "middleRankRoleId", 0))
     hrRoleId = runtimePermissions.toPositiveInt(getattr(config, "highRankRoleId", 0))
 
@@ -296,16 +196,6 @@ def hiddenCommandHelpEntries() -> list[tuple[str, str, str]]:
             "Configured terminal user only.",
         ),
         (
-            "?bgleaderboard / ?bg-leaderboard",
-            "Show BG reviewer approval/rejection leaderboard.",
-            f"BG-certified roles required ({runtimePermissions.formatRoleIds(bgRoles)}).",
-        ),
-        (
-            "?trainingstats / ?hoststats [@user|userId]",
-            "Show tracked training/orientation host stats.",
-            "Open to everyone in recognized servers.",
-        ),
-        (
             "!skin <user>",
             "Apply the skin nickname joke command.",
             f"Cohost roles required ({runtimePermissions.formatRoleIds(cohostRoles)}).",
@@ -321,27 +211,8 @@ def hiddenCommandHelpEntries() -> list[tuple[str, str, str]]:
             "Administrator only.",
         ),
         (
-            "!applications <divisionKey> <open|close|status>",
-            "Open/close application state for a division and refresh hub cards.",
-            (
-                "Application control roles "
-                f"({runtimePermissions.formatRoleIds(appControlRoles + [roleId for roleId in appAdminRoles if roleId not in appControlRoles])}) "
-                "or administrator/manage-server."
-            ),
-        ),
-        (
-            "!copyserver",
-            "Copy the configured source server snapshot into the current server.",
-            "Lead-dev copyserver allowlist only.",
-        ),
-        (
             "!allowserver",
             "Add the current server to Jane's allowed command guild list.",
-            "Configured ops allowlist only.",
-        ),
-        (
-            "!mirrortraininghistory",
-            "Run the training history mirror backfill once.",
             "Configured ops allowlist only.",
         ),
         (
@@ -375,13 +246,8 @@ def chunkHelpLines(lines: list[str], maxChars: int = 3500) -> list[str]:
 _HELP_SECTION_DEFS: list[tuple[str, str, str]] = [
     ("overview", "Overview", "High-level guide to Jane's command sections."),
     ("general", "General", "Info lookups, polls, reminders, suggestions, and utility commands."),
-    ("sessions", "Sessions", "Training, hosting, scheduled events, and session-adjacent commands."),
-    ("recruitment", "Recruitment & ORBAT", "Recruitment actions, ORBAT tools, LOAs, and division clock-ins."),
-    ("bg", "Background Checks", "Background-check flags, queue tools, and reviewer utilities."),
-    ("applications", "Applications", "Division application posting, review operations, and hub controls."),
-    ("awards", "Awards & Payments", "Ribbon workflows and ANRD payment processing."),
-    ("moderation", "Moderation & Safety", "Archive, quarantine, curfew, jail, and recovery tooling."),
-    ("misc", "Misc & Experimental", "Project, voice chat, ops, and uncategorized slash commands."),
+    ("community", "Community & Voice", "Best Of, events, gambling, and voice chat management."),
+    ("moderation", "Moderation & Safety", "Archive, curfew, jail, and runtime controls."),
     ("hidden", "Hidden / Text", "Prefix and hidden Jane commands."),
 ]
 
@@ -399,38 +265,33 @@ def _categorizeSlashPath(path: str) -> str:
         "/user-info",
         "/server-info",
         "/server-stats",
-        "/poll ",
         "/poll",
-        "/reminder ",
         "/reminder",
-        "/suggestion ",
         "/suggestion",
         "/post-role-menu",
     )):
         return "general"
-    if normalized.startswith(("/orientation", "/cohost", "/schedule-event", "/events", "/best-of")):
-        return "sessions"
-    if normalized.startswith(("/recruitment", "/recruitment-time-log", "/recruitment-patrol", "/orbat-request", "/loa-request", "/division-clockin")):
-        return "recruitment"
-    if normalized.startswith(("/bg-add", "/bg-flag", "/bg-intel")):
-        return "bg"
-    if normalized.startswith(("/applications", "/applications-hub-post", "/applications-hub-post-all", "/apps ", "/apps")):
-        return "applications"
-    if normalized.startswith(("/ribbon ", "/ribbon", "/request-payment")):
-        return "awards"
     if normalized.startswith((
-        "/snapshot-menu",
-        "/quarantine",
+        "/schedule-event",
+        "/events",
+        "/best-of",
+        "/create-voice-chat",
+        "/delete-voice-chat",
+        "/clean-voice-chats",
+        "/gambling",
+    )):
+        return "community"
+    if normalized.startswith((
         "/pause",
         "/restart",
         "/archive",
         "/curfew",
         "/jail",
         "/unjail",
-        "/federation-",
+        "/ops",
     )):
         return "moderation"
-    return "misc"
+    return "general"
 
 
 def buildHelpSections(

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import math
@@ -14,14 +14,11 @@ from db import sqlite as sqliteDb
 from runtime import interaction as interactionRuntime
 from runtime import normalization
 from runtime.dailyMessage import DailyMessageTrigger
-from runtime.prefix import bg as prefixBg
-from runtime.prefix import bg_flag_sync as prefixBgFlagSync
-from runtime.prefix import copyserver as prefixCopyserver
 from runtime.prefix import runtime_admin as prefixRuntimeAdmin
 from runtime.prefix import utility as prefixUtility
 
 _POTATO_USER_ID = 331660652672319488
-_POTATO_GENERAL_CHANNEL_ID = 1525783767971528764
+_POTATO_GENERAL_CHANNEL_ID = 0
 _POTATO_GREETING = "good to see you, mom"
 try:
     _POTATO_TIMEZONE = ZoneInfo("America/Chicago")
@@ -100,13 +97,7 @@ class TextCommandRouter:
         actor: discord.Member,
         sourceMessage: discord.Message | None = None,
     ) -> tuple[bool, str]:
-        return await prefixBg.createBgCheckQueue(
-            self,
-            guild=guild,
-            channel=channel,
-            actor=actor,
-            sourceMessage=sourceMessage,
-        )
+        return (False, "Background check is unavailable.")
 
     def _formatIsoTimestampOrNever(self, rawValue: object) -> str:
         rawText = str(rawValue or "").strip()
@@ -159,20 +150,43 @@ class TextCommandRouter:
         return configured if configured > 0 else 0
 
     def _copyServerAllowed(self, userId: int) -> bool:
-        return int(userId or 0) in prefixCopyserver.COPYSERVER_ALLOWED_USER_IDS
+        return self._shutdownAllowed(userId)
 
     def _shutdownAllowed(self, userId: int) -> bool:
-        try:
-            configuredIds = [int(value or 0) for value in list(getattr(self.config, "opsAllowedUserIds", []) or [])]
-        except Exception:
-            configuredIds = []
-        allowedIds = {userId for userId in configuredIds if int(userId or 0) > 0}
-        if not allowedIds:
-            allowedIds = set(prefixCopyserver.COPYSERVER_ALLOWED_USER_IDS)
-        return int(userId or 0) in allowedIds
+        allowedIds = set()
+        for raw in (getattr(self.config, "opsAllowedUserIds", []) or []):
+            try:
+                parsed = int(raw)
+                if parsed > 0:
+                    allowedIds.add(parsed)
+            except (ValueError, TypeError):
+                pass
+        errorMirror = int(getattr(self.config, "errorMirrorUserId", 0) or 0)
+        if errorMirror > 0:
+            allowedIds.add(errorMirror)
+        return bool(allowedIds) and userId in allowedIds
+
+    def _headDeveloperAllowed(self, userId: int) -> bool:
+        """Check if user is allowed head developer commands. Falls back to admin check."""
+        # Check configured ops users first
+        opsUserIds = set()
+        for raw in (getattr(self.config, "opsAllowedUserIds", []) or []):
+            try:
+                parsed = int(raw)
+                if parsed > 0:
+                    opsUserIds.add(parsed)
+            except (ValueError, TypeError):
+                pass
+        if opsUserIds and userId in opsUserIds:
+            return True
+        # Fallback: check errorMirrorUserId
+        errorMirror = int(getattr(self.config, "errorMirrorUserId", 0) or 0)
+        if errorMirror > 0 and userId == errorMirror:
+            return True
+        return False
 
     def noteCopyServerWarningMessage(self, message: discord.Message) -> None:
-        prefixCopyserver.noteCopyServerWarningMessage(self, message)
+        pass
 
     def _readGeneralErrorLogTail(self, *, maxLines: int = 10, maxChars: int = 900) -> list[str]:
         logPathText = str(self.generalErrorLogPath or "").strip()
@@ -287,19 +301,19 @@ class TextCommandRouter:
         return await prefixRuntimeAdmin.handleMirrorTrainingHistory(self, message)
 
     async def handleCopyServer(self, message: discord.Message) -> bool:
-        return await prefixCopyserver.handleCopyServer(self, message)
+        return False
 
     async def handleViewAllChannels(self, message: discord.Message) -> bool:
         return await prefixRuntimeAdmin.handleViewAllChannels(self, message)
 
     async def handleBgCheckCommand(self, message: discord.Message) -> bool:
-        return await prefixBg.handleBgCheckCommand(self, message)
+        return False
 
     async def handleBgLeaderboardCommand(self, message: discord.Message) -> bool:
-        return await prefixBg.handleBgLeaderboardCommand(self, message)
+        return False
 
     async def handleJaneFlagSync(self, message: discord.Message) -> bool:
-        return await prefixBgFlagSync.handleJaneFlagSync(self, message)
+        return False
 
     async def handlePermissionSimulatorCommand(self, message: discord.Message) -> bool:
         return await prefixUtility.handlePermissionSimulatorCommand(self, message)
