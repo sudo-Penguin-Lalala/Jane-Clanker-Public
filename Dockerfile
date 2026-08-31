@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo \
     zlib1g \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd -u 1000 -m -s /bin/bash appuser
+    && useradd -u 1000 -m -s /bin/bash appuser \
+    && mkdir -p /app/logs /app/data \
+    && chown -R appuser:appuser /app
 COPY --from=builder /install /usr/local
 COPY --chown=appuser:appuser . .
 ENV PYTHONUNBUFFERED=1 \
