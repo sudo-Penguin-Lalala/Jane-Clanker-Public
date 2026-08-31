@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -76,14 +76,26 @@ async def _safeEphemeral(interaction: Interaction | None, message: str) -> None:
 
 
 def _getVoiceChatGuild(bot: commands.Bot) -> discord.Guild | None:
-    return bot.get_guild(serverId)
+    targetGuild = bot.get_guild(serverId) if serverId else None
+    if targetGuild is not None:
+        return targetGuild
+    # Fallback to the first connected guild (e.g. NNT's Lab)
+    return bot.guilds[0] if bot.guilds else None
 
 
 def _getVoiceChatCategory(guild: discord.Guild | None) -> CategoryChannel | None:
     if guild is None:
         return None
-    category = guild.get_channel(voiceChannelCreationCategory)
-    return category if isinstance(category, CategoryChannel) else None
+    if voiceChannelCreationCategory:
+        category = guild.get_channel(voiceChannelCreationCategory)
+        if isinstance(category, CategoryChannel):
+            return category
+    # Fallback 1: category named 'voice' or 'temporary'
+    for category in guild.categories:
+        if "voice" in category.name.lower() or "temporary" in category.name.lower():
+            return category
+    # Fallback 2: first available category in guild
+    return guild.categories[0] if guild.categories else None
 
 
 def isPermanentChannel(channel: VoiceChannel | None) -> bool:
