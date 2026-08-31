@@ -83,15 +83,7 @@ class WebhookHealthWatcher:
             return "inaccessible"
 
     async def _cleanupMissingDivisionHubMessage(self, *, messageId: int) -> bool:
-        try:
-            await applicationsService.deleteHubMessage(int(messageId))
-            return True
-        except Exception:
-            log.exception(
-                "Webhook health cleanup failed for missing application hub message %s.",
-                messageId,
-            )
-            return False
+        return False
 
     async def _cleanupMissingScheduledEvent(self, *, eventId: int) -> bool:
         try:

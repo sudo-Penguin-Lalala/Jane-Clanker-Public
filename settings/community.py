@@ -47,42 +47,6 @@ robloxGroupUrl = ""
 
 # Jane Identity links Discord users to Roblox accounts through a Discord-started
 # Roblox OAuth flow. The web server only handles the OAuth callback.
-janeIdentityEnabled = True
-janeIdentityWebEnabled = _envFlag("JANE_IDENTITY_WEB_ENABLED", False)
-janeIdentityWebHost = _envText("JANE_IDENTITY_WEB_HOST", "127.0.0.1")
-janeIdentityWebPort = _envInt("JANE_IDENTITY_WEB_PORT", 8791)
-janeIdentityPublicBaseUrl = _envText("JANE_IDENTITY_PUBLIC_BASE_URL")
-janeIdentityRedirectPath = "/identity/roblox/callback"
-janeIdentityRedirectUri = _envText("JANE_IDENTITY_REDIRECT_URI")
-janeIdentityApiToken = _envText("JANE_IDENTITY_API_TOKEN")
-janeIdentityLinkTtlSec = 600
-janeIdentityRelayEnabled = _envFlag("JANE_IDENTITY_RELAY_ENABLED", False)
-janeIdentityRelayApiBaseUrl = _envText("JANE_IDENTITY_RELAY_API_BASE_URL")
-janeIdentityRelayApiToken = _envText("JANE_IDENTITY_RELAY_API_TOKEN")
-janeIdentityRelayPollIntervalSec = 5
-janeIdentityRelayBatchSize = 10
-janeIdentityPreferInternalLinks = True
-janeIdentityUpdateNickname = True
-janeIdentityVerifiedRoleIds = []
-janeIdentityUnverifiedRoleIds = []
-janeIdentityGroupRoleRules = []
-janeIdentityAutoApplyOnJoin = True
-janeIdentityBulkUpdateFetchMembers = True
-janeIdentityBulkUpdateMaxMembers = 5000
-janeIdentityBulkUpdateDelaySec = 0.20
-janeIdentityScheduledRefreshEnabled = True
-janeIdentityScheduledRefreshShardCount = 7
-janeIdentityScheduledRefreshHourCentral = 0
-janeIdentityScheduledRefreshMinuteCentral = 0
-janeIdentityScheduledRefreshFetchMembers = False
-janeIdentityScheduledRefreshMaxMembers = 5000
-janeIdentityScheduledRefreshDelaySec = 0.50
-janeIdentityScheduledRefreshPauseWhenBusy = True
-janeIdentityScheduledRefreshBusyPollSec = 30
-robloxOAuthClientId = _envText("ROBLOX_OAUTH_CLIENT_ID")
-robloxOAuthClientSecret = _envText("ROBLOX_OAUTH_CLIENT_SECRET")
-
-# RoVer lookup (Discord -> Roblox). Uses the official RoVer API.
 roverApiBaseUrl = "https://registry.rover.link/api/guilds/{guildId}/discord-to-roblox/{discordId}"
 roverApiKeyHeader = "Authorization"
 roverApiKeyUseBearer = True

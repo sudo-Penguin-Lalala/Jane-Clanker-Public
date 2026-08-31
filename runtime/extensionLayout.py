@@ -15,7 +15,6 @@ _coreExtensionNames = [
     "cogs.community.bestOfCog",
     "cogs.community.archiveCog",
     "cogs.community.infoCog",
-    "cogs.community.identityCog",
     "cogs.community.pollCog",
     "cogs.community.reminderCog",
     "cogs.community.suggestionCog",

@@ -799,50 +799,9 @@ class BestOfCog(commands.Cog):
         if not candidateMembersByUserId:
             return out
 
-        lookupEnabled = bool(getattr(config, "bestOfRobloxLookupEnabled", True))
-        lookupConcurrency = max(
-            1,
-            min(20, int(getattr(config, "bestOfRobloxLookupConcurrency", 8) or 8)),
-        )
-        try:
-            lookupTimeoutSec = float(getattr(config, "bestOfRobloxLookupTimeoutSec", 3.0) or 3.0)
-        except (TypeError, ValueError):
-            lookupTimeoutSec = 3.0
-        lookupTimeoutSec = max(0.25, min(10.0, lookupTimeoutSec))
-        semaphore = asyncio.Semaphore(lookupConcurrency)
-
-        async def _resolve(member: discord.Member) -> None:
-            fallbackName = _cleanBestOfDisplayName(
-                str(member.display_name or member.name or f"User {member.id}")
-            )
-            resolvedName = fallbackName
-            if lookupEnabled:
-                try:
-                    async with semaphore:
-                        lookup = await asyncio.wait_for(
-                            robloxUsers.fetchRobloxUser(
-                                int(member.id),
-                                guildId=int(guild.id),
-                            ),
-                            timeout=lookupTimeoutSec,
-                        )
-                    robloxUsername = str(lookup.robloxUsername or "").strip()
-                    if robloxUsername:
-                        resolvedName = robloxUsername
-                except TimeoutError:
-                    log.info(
-                        "Best Of Roblox lookup timed out after %.2fs for userId=%d; using Discord name.",
-                        lookupTimeoutSec,
-                        int(member.id),
-                    )
-                except Exception:
-                    log.exception(
-                        "Best Of Roblox lookup failed for userId=%d; using Discord name.",
-                        int(member.id),
-                    )
-            out[int(member.id)] = resolvedName
-
-        await asyncio.gather(*(_resolve(member) for member in candidateMembersByUserId.values()))
+        for member in candidateMembersByUserId.values():
+            fallbackName = _cleanBestOfDisplayName(str(member.display_name or member.name or f"User {member.id}"))
+            out[int(member.id)] = fallbackName
         return out
 
     async def _candidateRowsForPoll(

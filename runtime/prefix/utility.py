@@ -175,17 +175,10 @@ async def _knownRobloxIdentity(discordUserId: int) -> bool:
 
 
 async def _pairDbNamesLookup(discordUserId: int, guildId: int) -> _PairDbNamesLookupResult:
-    robloxUsers.clearRobloxIdentityCache(int(discordUserId))
-    result = await robloxUsers.fetchRobloxUser(
-        int(discordUserId),
-        guildId=int(guildId) if int(guildId or 0) > 0 else None,
+    return _PairDbNamesLookupResult(
+        robloxUsername="",
+        errorMessage="Roblox lookups have been removed."
     )
-    username = str(getattr(result, "robloxUsername", "") or "").strip()
-    error = str(getattr(result, "error", "") or "").strip()
-    if username:
-        source = "local" if error.startswith("RoVer lookup unavailable; using") else "rover"
-        return _PairDbNamesLookupResult(int(discordUserId), username, error, source)
-    return _PairDbNamesLookupResult(int(discordUserId), "", error or "No Roblox account returned.", "failed")
 
 
 def _pairDbNamesSummaryLine(
