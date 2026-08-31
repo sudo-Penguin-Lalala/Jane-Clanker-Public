@@ -18,7 +18,7 @@ from runtime.prefix import runtime_admin as prefixRuntimeAdmin
 from runtime.prefix import utility as prefixUtility
 
 _POTATO_USER_ID = 331660652672319488
-_POTATO_GENERAL_CHANNEL_ID = 0
+_POTATO_GENERAL_CHANNEL_ID = 1
 _POTATO_GREETING = "good to see you, mom"
 try:
     _POTATO_TIMEZONE = ZoneInfo("America/Chicago")
