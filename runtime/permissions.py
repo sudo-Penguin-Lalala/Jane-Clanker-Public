@@ -17,6 +17,8 @@ def normalizeRoleIds(raw: object) -> list[int]:
 
 
 def hasAnyRole(member: discord.Member, roleIds: object) -> bool:
+    if getattr(getattr(member, "guild_permissions", None), "administrator", False):
+        return True
     allowedRoleIds = normalization.normalizeIntSet(roleIds)
     if not allowedRoleIds:
         return False

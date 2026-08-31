@@ -158,12 +158,13 @@ async def enforceGamblingRoleAccess(interaction: discord.Interaction) -> bool:
     if not isinstance(interaction.user, discord.Member):
         await sendEphemeralInteractionMessage(interaction, _gamblingAccessDeniedMessage)
         return False
-    if not _memberHasGamblingRole(interaction.user):
+    isAdmin = bool(getattr(interaction.user.guild_permissions, "administrator", False))
+    if not isAdmin and not _memberHasGamblingRole(interaction.user):
         await sendEphemeralInteractionMessage(interaction, _gamblingAccessDeniedMessage)
         return False
-    if isCategoryLockEnabled():
+    if isCategoryLockEnabled() and not isAdmin:
         categoryId = _interactionCategoryId(interaction)
-        if categoryId not in gamblingAllowedCategoryIds:
+        if gamblingAllowedCategoryIds and categoryId not in gamblingAllowedCategoryIds:
             await sendEphemeralInteractionMessage(interaction, _gamblingCategoryDeniedMessage)
             return False
     return True
