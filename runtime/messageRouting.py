@@ -217,7 +217,8 @@ class HumanMessageRouter:
         textRouter = self.textCommandRouterProvider()
         textRouter.noteCopyServerWarningMessage(message)
         await textRouter.handlePotatoGreeting(message)
-        if await textRouter.handleJaneSecrets(message):
+        secretHandler = getattr(textRouter, "handleJaneSecrets", None)
+        if secretHandler is not None and await secretHandler(message):
             return
 
         token = textRouter.firstLowerToken(message.content or "")
