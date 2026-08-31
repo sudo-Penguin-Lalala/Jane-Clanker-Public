@@ -53,10 +53,7 @@ def isApprovedCommandGuild(guildId: int | None) -> bool:
 
 
 def hasApprovedAdminOverride(member: discord.Member) -> bool:
-    if not hasAdminOrManageGuild(member):
-        return False
-    guildId = int(getattr(getattr(member, "guild", None), "id", 0) or 0)
-    return isApprovedCommandGuild(guildId)
+    return hasAdminOrManageGuild(member)
 
 
 @lru_cache(maxsize=1)
