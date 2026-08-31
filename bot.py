@@ -430,7 +430,7 @@ async def _maybeSyncRoleBasedOrbats(member: discord.Member, guildId: int) -> Non
                 result.get("targetRank"),
             )
             try:
-                if payload:
+                if True:
                     pass
             except Exception:
                 logging.exception(
@@ -686,8 +686,6 @@ async def setup_hook() -> None:
         "auditStream": _auditStream,
         "metricsExporter": _metricsExporter,
         "webhookHealthWatcher": _webhookHealthWatcher,
-        "johnEventCoordinator": _johnEventCoordinator,
-        "janeIdentityWebServer": _janeIdentityWebServer,
         "gitUpdateCoordinator": _gitUpdateCoordinator,
         "generalErrorLogPath": runtimeErrorLogging.currentProcessLogSummary(configModule=config),
         "createBgCheckQueue": (
@@ -700,21 +698,15 @@ async def setup_hook() -> None:
         ),
     }
     await _bootstrapCoordinator.setupHook()
-    await _gamblingApiServer.start()
-    await _janeIdentityWebServer.start()
     if _gitUpdateCoordinator is not None:
         _gitUpdateCoordinator.start()
-    _trainingLogRuntime.start()
 
 
 @botClient.event
 async def on_ready() -> None:
     botClient.loop_ref = asyncio.get_running_loop()
     await _bootstrapCoordinator.onReady()
-    logging.info("on_ready reached; ensuring training log startup sync task is running.")
     _startBotProfileBioTask()
-    _trainingLogRuntime.start()
-    _johnEventCoordinator.start()
 
 
 @botClient.check
@@ -915,14 +907,9 @@ async def _runRuntimeCleanupServices() -> None:
     await _runCleanupStep("webhook health watcher", _webhookHealthWatcher.stop)
     await _runCleanupStep("retry queue", _retryQueue.stop)
     await _runCleanupStep("feature flag refreshes", _featureFlags.stop)
-    await _runCleanupStep("Jane Identity web callback", _janeIdentityWebServer.stop)
-    await _runCleanupStep("gambling API", _gamblingApiServer.stop)
-    await _runCleanupStep("John event backfill", _johnEventCoordinator.stop)
-    await _runCleanupStep("training log tasks", _trainingLogRuntime.stop)
     if _humanMessageRouter is not None:
         await _runCleanupStep("human message routing tasks", _humanMessageRouter.stop)
     await _runCleanupStep("supervised runtime tasks", _runtimeTaskSupervisor.stop)
-    await _runCleanupStep("Roblox HTTP session", robloxTransport.closeHttpSession)
     if bool(getattr(config, "dbRuntimeSnapshotOnShutdown", True)):
         async def _captureDbShutdownSnapshot() -> None:
             label = (
@@ -962,21 +949,9 @@ async def on_close() -> None:
 
 @botClient.event
 async def on_message(message: discord.Message) -> None:
-    _trainingLogRuntime.scheduleCapture(message)
     if not message.author.bot:
         await _getHumanMessageRouter().handle(message)
         return
-    parsedEvents = await _johnEventCoordinator.parse(message)
-    for event in parsedEvents:
-        try:
-            await _johnEventCoordinator.handleIngestedEvent(message, event)
-        except Exception:
-            logging.exception(
-                "Event ingest handler failed (source=%s type=%s message=%s).",
-                event.source,
-                event.eventType,
-                message.id,
-            )
     return await botClient.process_commands(message)
 
 
@@ -984,7 +959,6 @@ async def on_message(message: discord.Message) -> None:
 async def on_message_edit(before: discord.Message, after: discord.Message) -> None:
     if int(getattr(before, "id", 0) or 0) != int(getattr(after, "id", 0) or 0):
         return
-    _trainingLogRuntime.scheduleCapture(after)
 
 if __name__ == "__main__":
     runtimeEntrypoint.runMain(
