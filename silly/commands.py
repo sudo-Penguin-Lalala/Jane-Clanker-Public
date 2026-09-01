@@ -881,3 +881,169 @@ async def handleUnkillCommand(message: discord.Message, botClient: discord.Clien
 
     await _tryChannelSendEmbed(message.channel, embed)
     return True
+
+_brickQuotes = [
+    "{author} threw a brick at {target}. Critical hit!",
+    "{target} caught the brick... with their face.",
+    "A brick materialized in the sky and dropped directly onto {target}.",
+    "{target} dodged the brick, but it ricocheted and hit them anyway.",
+    "{author} aggressively delivered a brick to {target}'s skull.",
+    "The brick has spoken. {target} is flattened.",
+    "{target} failed the vibe check and received a brick in return.",
+]
+
+async def handleBrickCommand(message: discord.Message) -> bool:
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return False
+    raw = message.content.strip()
+    if not raw.lower().startswith("!brick"):
+        return False
+
+    parts = raw.split(maxsplit=1)
+    target: discord.Member | None = None
+    if len(parts) >= 2 and parts[1].strip():
+        try:
+            target = await _resolveMemberFromQuery(message.guild, parts[1].strip())
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            target = None
+    else:
+        target = await _resolveReplyTarget(message)
+
+    if target is None:
+        await _tryChannelSend(message.channel, "Usage: `!brick @user`")
+        return True
+
+    quote = random.choice(_brickQuotes).format(target=target.mention, author=message.author.mention)
+    embed = discord.Embed(
+        title="🧱 INCOMING BRICK",
+        description=f"\n\n**{quote}**",
+        color=discord.Color.red(),
+        timestamp=datetime.now(timezone.utc),
+    )
+    await _tryChannelSendEmbed(message.channel, embed)
+    return True
+
+async def handleClownCommand(
+    message: discord.Message,
+    botClient: discord.Client,
+    *,
+    hasSkinPermission: Callable[[discord.Member], bool],
+) -> bool:
+    if message.author.bot or not message.content:
+        return False
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return False
+
+    raw = message.content.strip()
+    if not raw.lower().startswith("!clown"):
+        return False
+
+    parts = raw.split(maxsplit=1)
+    if int(message.author.id) not in _skinAllowedUserIds and not hasSkinPermission(message.author):
+        await _tryChannelSend(message.channel, "You do not have permission to clown people.")
+        return True
+
+    target: discord.Member | None = None
+    if len(parts) >= 2 and parts[1].strip():
+        try:
+            target = await _resolveMemberFromQuery(message.guild, parts[1].strip())
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            target = None
+    else:
+        target = await _resolveReplyTarget(message)
+
+    if target is None:
+        await _tryChannelSend(message.channel, "Usage: `!clown @user`")
+        return True
+
+    if bool(getattr(target, "bot", False)) or bool(getattr(target, "system", False)):
+        await _tryChannelSend(message.channel, "I can't clown bots.")
+        return True
+
+    currentName = target.display_name
+    match = re.match(r"^\[🤡\](.*)$", currentName)
+    if match:
+        await _tryChannelSend(message.channel, f"{target.mention} is already a clown.")
+        return True
+
+    newName = f"[🤡] {currentName}"[:32]
+    try:
+        await target.edit(nick=newName, reason=f"Clowned by {message.author} ({message.author.id})")
+    except (discord.Forbidden, discord.HTTPException):
+        await _tryChannelSend(message.channel, "I couldn't change that nickname (role hierarchy).")
+        return True
+
+    jokes = [
+        f"{target.mention} has put on the big red nose and floppy shoes.",
+        f"{message.author.mention} handed {target.mention} a clown license.",
+        f"Honk honk! {target.mention} has officially joined the circus.",
+        f"{target.mention} is the entire comedy industry right now.",
+    ]
+    chosenLine = random.choice(jokes)
+    embed = discord.Embed(
+        title="🎪 Circus Recruitment",
+        description=f"\n\n{chosenLine}",
+        color=discord.Color.from_rgb(255, 0, 255),
+        timestamp=datetime.now(timezone.utc),
+    )
+    await _tryChannelSendEmbed(message.channel, embed)
+    return True
+
+async def handleUnclownCommand(
+    message: discord.Message,
+    botClient: discord.Client,
+    *,
+    hasSkinPermission: Callable[[discord.Member], bool],
+) -> bool:
+    if message.author.bot or not message.content:
+        return False
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return False
+
+    raw = message.content.strip()
+    if not raw.lower().startswith("!unclown"):
+        return False
+
+    parts = raw.split(maxsplit=1)
+    if int(message.author.id) not in _skinAllowedUserIds and not hasSkinPermission(message.author):
+        await _tryChannelSend(message.channel, "You do not have permission to unclown people.")
+        return True
+
+    target: discord.Member | None = None
+    if len(parts) >= 2 and parts[1].strip():
+        try:
+            target = await _resolveMemberFromQuery(message.guild, parts[1].strip())
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            target = None
+    else:
+        target = await _resolveReplyTarget(message)
+
+    if target is None:
+        await _tryChannelSend(message.channel, "Usage: `!unclown @user`")
+        return True
+
+    currentName = target.display_name
+    match = re.match(r"^\[🤡\]\s*(.*)$", currentName)
+    if not match:
+        await _tryChannelSend(message.channel, f"{target.mention} doesn't look like a clown to me.")
+        return True
+
+    newName = match.group(1).strip()
+    if not newName:
+        newName = target.name
+
+    try:
+        await target.edit(nick=newName[:32], reason=f"Unclowned by {message.author} ({message.author.id})")
+    except (discord.Forbidden, discord.HTTPException):
+        await _tryChannelSend(message.channel, "I couldn't fix that nickname.")
+        return True
+
+    embed = discord.Embed(
+        title="🎪 Discharge",
+        description=f"\n\n{target.mention} has been honorably discharged from the circus.",
+        color=discord.Color.green(),
+        timestamp=datetime.now(timezone.utc),
+    )
+    await _tryChannelSendEmbed(message.channel, embed)
+    return True
+
