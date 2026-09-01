@@ -95,6 +95,20 @@ _killQuotes = [
     "{target} was locked in the control room with JRO's during a WN raid.",
     "{target} is being placed inside the control room microwave.",
     "{target} will be converted into a backup coolant system.",
+    "{target} has been sent to the shadow realm.",
+    "{target} is being fed to the server hamsters.",
+    "{target} stepped on a Lego and did not survive.",
+    "{target} has been permanently banned from the fridge.",
+    "{target} was folded like a lawn chair.",
+    "{target} is being sent to Brazil.",
+    "{target} got their kneecaps stolen by Jane.",
+    "{target} has been reduced to atoms.",
+    "{target} was forced to eat the mystery cafeteria meat.",
+    "{target} just tripped and fell into the Minecraft void.",
+    "{target} got put in the rice cooker.",
+    "{target} is being turned into a marketable plushie.",
+    "{target} has been exiled to the phantom zone.",
+    "{target} was yeeted into the sun.",
 ]
 
 
@@ -568,8 +582,19 @@ async def handleSkinCommand(
         f"{target.mention} has been skinned. What a bum.",
         f"{target.mention} got skinned by {message.author.mention}. Tragic.",
         f"Skinning complete: {target.mention} has entered the leather era.",
-        f"{target.mention} has been skinned. Somebody alert ANRO dermatology.",
+        f"{target.mention} has been skinned. Somebody alert dermatology.",
         f"{message.author.mention} has claimed another victim, {target.mention} will never recover :pensive:",
+        f"{target.mention} is now missing their outer layer.",
+        f"{target.mention} got turned into a nice rug for the lobby.",
+        f"{target.mention}'s skin was successfully donated to science.",
+        f"Operation successful. {target.mention} is now a skeleton.",
+        f"{target.mention} was peeled like a banana by {message.author.mention}.",
+        f"Ouch! {target.mention} just lost their privileges to having skin.",
+        f"{message.author.mention} just stole {target.mention}'s skin and is wearing it.",
+        "Skin? Gone. Bones? Cold. Hotel? Trivago.",
+        f"{target.mention} has been temporarily converted into a leather jacket.",
+        f"{target.mention} is looking a little bare after {message.author.mention} got to them.",
+        f"{target.mention} has been un-installed from their skin.",
     ]
     chosenLine = random.choice(jokes)
     embed = discord.Embed(
