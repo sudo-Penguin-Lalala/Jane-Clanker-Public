@@ -782,7 +782,7 @@ async def handleUnskinCommand(
         return False
 
     raw = message.content.strip()
-    if not raw.lower().startswith("!unskin"):
+    if raw.split(maxsplit=1)[0].lower() not in ("!unskin", "!unpeel", "!flesh", "!moisturize"):
         return False
 
     parts = raw.split(maxsplit=1)
@@ -800,7 +800,7 @@ async def handleUnskinCommand(
         target = await _resolveReplyTarget(message)
 
     if target is None:
-        await _tryChannelSend(message.channel, "Usage: `!unskin username`")
+        await _tryChannelSend(message.channel, "Usage: `!unpeel @user`, `!flesh @user`, or `!moisturize @user`")
         return True
         
     currentName = target.display_name
@@ -849,7 +849,7 @@ async def handleUnkillCommand(message: discord.Message, botClient: discord.Clien
         return False
 
     raw = message.content.strip()
-    if raw.split(maxsplit=1)[0].lower() not in ("!unkill", "!revive"):
+    if raw.split(maxsplit=1)[0].lower() != "!revive":
         return False
 
     if not runtimePermissions.hasMiddleHighRankRole(message.author):
@@ -867,7 +867,7 @@ async def handleUnkillCommand(message: discord.Message, botClient: discord.Clien
         target = await _resolveReplyTarget(message)
 
     if target is None:
-        await _tryChannelSend(message.channel, "Usage: `!unkill @user` or `!revive @user`")
+        await _tryChannelSend(message.channel, "Usage: `!revive @user`")
         return True
 
     quote = random.choice(_unkillQuotes).format(target=target.mention)
