@@ -186,7 +186,15 @@ class HumanMessageRouter:
             hasSkinPermission=self.hasCohostPermission,
         ):
             return
+        if await self.sillyCommands.handleUnskinCommand(
+            message,
+            self.botClient,
+            hasSkinPermission=self.hasCohostPermission,
+        ):
+            return
         if await self.sillyCommands.handleKillCommand(message, self.botClient):
+            return
+        if await self.sillyCommands.handleUnkillCommand(message, self.botClient):
             return
         if await self.sillyCommands.handleCasinoToggleCommand(message):
             return

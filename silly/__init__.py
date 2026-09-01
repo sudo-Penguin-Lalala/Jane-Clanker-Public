@@ -1,6 +1,6 @@
-from .commands import handleSkinCommand, maybeHandleSillyMentions
+from .commands import handleSkinCommand, handleUnskinCommand, handleKillCommand, handleUnkillCommand, maybeHandleSillyMentions
 
 __all__ = [
-    "handleSkinCommand",
+    "handleSkinCommand", "handleUnskinCommand", "handleKillCommand", "handleUnkillCommand",
     "maybeHandleSillyMentions",
 ]

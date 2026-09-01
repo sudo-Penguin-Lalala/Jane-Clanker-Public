@@ -769,3 +769,115 @@ async def maybeHandleSillyMentions(message: discord.Message, botClient: discord.
     else:
         responseText = f"Hi {message.author.mention}!"
     await _tryChannelSend(message.channel, responseText)
+
+async def handleUnskinCommand(
+    message: discord.Message,
+    botClient: discord.Client,
+    *,
+    hasSkinPermission: Callable[[discord.Member], bool],
+) -> bool:
+    if message.author.bot or not message.content:
+        return False
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return False
+
+    raw = message.content.strip()
+    if not raw.lower().startswith("!unskin"):
+        return False
+
+    parts = raw.split(maxsplit=1)
+    if int(message.author.id) not in _skinAllowedUserIds and not hasSkinPermission(message.author):
+        await _tryChannelSend(message.channel, "You do not have permission to unskin users.")
+        return True
+
+    target: discord.Member | None = None
+    if len(parts) >= 2 and parts[1].strip():
+        try:
+            target = await _resolveMemberFromQuery(message.guild, parts[1].strip())
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            target = None
+    else:
+        target = await _resolveReplyTarget(message)
+
+    if target is None:
+        await _tryChannelSend(message.channel, "Usage: `!unskin username`")
+        return True
+        
+    currentName = target.display_name
+    match = re.match(r"^\[([^\]]+)\](.*)$", currentName)
+    if not match or not match.group(1).endswith("-SKINNED"):
+        await _tryChannelSend(message.channel, f"{target.mention} doesn't look skinned to me.")
+        return True
+        
+    newName = match.group(2).strip()
+    if not newName:
+        newName = target.name
+        
+    try:
+        await target.edit(nick=newName[:32], reason=f"Unskinned by {message.author} ({message.author.id})")
+    except (discord.Forbidden, discord.HTTPException):
+        await _tryChannelSend(message.channel, "I couldn't fix that nickname (role hierarchy or permissions).")
+        return True
+
+    jokes = [
+        f"{target.mention} has been unskinned. A new layer of flesh has been surgically attached.",
+        f"Skin restored! {target.mention} is looking squishy again.",
+        f"{message.author.mention} felt bad and returned {target.mention}'s skin.",
+        f"{target.mention} has left the leather era.",
+    ]
+    chosenLine = random.choice(jokes)
+    embed = discord.Embed(
+        title="Skin Restored",
+        description=f"\n\n{chosenLine}",
+        color=discord.Color.green(),
+        timestamp=datetime.now(timezone.utc),
+    )
+    await _tryChannelSendEmbed(message.channel, embed)
+    return True
+
+_unkillQuotes = [
+    "{target}'s execution was called off.",
+    "{target} was resurrected by dark magic.",
+    "{target} bribed Jane to live another day.",
+    "{target} was pardoned at the very last second.",
+    "{target} respawned.",
+    "{target} was granted a 1-Up mushroom.",
+]
+
+async def handleUnkillCommand(message: discord.Message, botClient: discord.Client) -> bool:
+    if not message.guild or not isinstance(message.author, discord.Member):
+        return False
+
+    raw = message.content.strip()
+    if raw.split(maxsplit=1)[0].lower() not in ("!unkill", "!revive"):
+        return False
+
+    if not runtimePermissions.hasMiddleHighRankRole(message.author):
+        await _tryChannelSend(message.channel, "You need Administrator/Moderator permissions to pardon someone.")
+        return True
+
+    parts = raw.split(maxsplit=1)
+    target: discord.Member | None = None
+    if len(parts) >= 2 and parts[1].strip():
+        try:
+            target = await _resolveMemberFromQuery(message.guild, parts[1].strip())
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            target = None
+    else:
+        target = await _resolveReplyTarget(message)
+
+    if target is None:
+        await _tryChannelSend(message.channel, "Usage: `!unkill @user` or `!revive @user`")
+        return True
+
+    quote = random.choice(_unkillQuotes).format(target=target.mention)
+    embed = discord.Embed(
+        title="Execution Cancelled",
+        description=f"**{quote}**\n\n-# {target.mention} has been spared.",
+        color=discord.Color.green(),
+        timestamp=datetime.now(timezone.utc),
+    )
+    embed.set_footer(text=f"Pardoned by {message.author.display_name}")
+
+    await _tryChannelSendEmbed(message.channel, embed)
+    return True
