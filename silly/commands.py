@@ -782,7 +782,7 @@ async def handleUnskinCommand(
         return False
 
     raw = message.content.strip()
-    if raw.split(maxsplit=1)[0].lower() not in ("!unskin", "!unpeel", "!flesh", "!moisturize"):
+    if raw.split(maxsplit=1)[0].lower() != "!flesh":
         return False
 
     parts = raw.split(maxsplit=1)
@@ -800,7 +800,7 @@ async def handleUnskinCommand(
         target = await _resolveReplyTarget(message)
 
     if target is None:
-        await _tryChannelSend(message.channel, "Usage: `!unpeel @user`, `!flesh @user`, or `!moisturize @user`")
+        await _tryChannelSend(message.channel, "Usage: `!flesh @user`")
         return True
         
     currentName = target.display_name
