@@ -804,12 +804,12 @@ async def handleUnskinCommand(
         return True
         
     currentName = target.display_name
-    match = re.match(r"^\[([^\]]+)\](.*)$", currentName)
-    if not match or not match.group(1).endswith("-SKINNED"):
+    match = re.search(r"\[([^\]]+-SKINNED)\]", currentName)
+    if not match:
         await _tryChannelSend(message.channel, f"{target.mention} doesn't look skinned to me.")
         return True
         
-    newName = match.group(2).strip()
+    newName = currentName.replace(f"[{match.group(1)}]", "").strip()
     if not newName:
         newName = target.name
         
@@ -961,7 +961,7 @@ async def handleClownCommand(
         return True
 
     currentName = target.display_name
-    match = re.match(r"^\[🤡\](.*)$", currentName)
+    match = "🤡" in currentName
     if match:
         await _tryChannelSend(message.channel, f"{target.mention} is already a clown.")
         return True
@@ -1023,12 +1023,12 @@ async def handleUnclownCommand(
         return True
 
     currentName = target.display_name
-    match = re.match(r"^\[🤡\]\s*(.*)$", currentName)
+    match = "🤡" in currentName
     if not match:
         await _tryChannelSend(message.channel, f"{target.mention} doesn't look like a clown to me.")
         return True
 
-    newName = match.group(1).strip()
+    newName = currentName.replace("[🤡]", "").strip()
     if not newName:
         newName = target.name
 
