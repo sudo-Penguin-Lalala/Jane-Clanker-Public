@@ -7,10 +7,10 @@ from .env import _envFlag, _envInt, _envText
 token = _envText("DISCORD_BOT_TOKEN")
 
 # Primary servers.
-serverId = 0
+serverId = _envInt("DISCORD_GUILD_ID", 0)
 # JANE_TEST_GUILD_ID lets each machine point at its own dev guild.
 # Falls back to the shared default below.
-serverIdTesting = 0
+serverIdTesting = _envInt("JANE_TEST_GUILD_ID", 0)
 testGuildIds = []
 
 

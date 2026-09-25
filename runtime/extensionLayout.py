@@ -21,6 +21,7 @@ _coreExtensionNames = [
     "cogs.community.minecraftCog",
     "cogs.operations.curfewCog",
     "cogs.operations.jailCog",
+    "cogs.operations.nextcloudMonitorCog",
     "cogs.staff.voiceChatCog",
     "silly.hallCog",
     "silly.gamblingCog",

@@ -172,6 +172,7 @@ class JailCog(runtimeCogGuards.InteractionGuardMixin, commands.Cog):
         return cleared
 
     # Legacy slash handler kept for future reuse.
+    @app_commands.command(name="jail", description="Isolate a user into the jail channel")
     async def jail(self, interaction: discord.Interaction, user: discord.Member) -> None:
         member = await self._requireAdministrator(interaction)
         if member is None:
@@ -277,6 +278,7 @@ class JailCog(runtimeCogGuards.InteractionGuardMixin, commands.Cog):
         )
 
     # Legacy slash handler kept for future reuse.
+    @app_commands.command(name="unjail", description="Release a user from jail and restore their roles")
     async def unjail(self, interaction: discord.Interaction, user: discord.Member) -> None:
         member = await self._requireAdministrator(interaction)
         if member is None:
